@@ -1,4 +1,4 @@
-import '../data/models/user_model.dart';
+import 'package:instagram/features/Authentication/data/models/user_model.dart';
 
 abstract class AuthState {}
 
@@ -6,9 +6,9 @@ class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
 
-class AuthAuthenticated extends AuthState {
+class AuthLoggedIn extends AuthState {
   final UserModel user;
-  AuthAuthenticated(this.user);
+  AuthLoggedIn({required this.user});
 }
 
 class AuthError extends AuthState {
@@ -17,3 +17,8 @@ class AuthError extends AuthState {
 }
 
 class AuthLoggedOut extends AuthState {}
+
+class AuthPasswordReset extends AuthState {
+  final String email;
+  AuthPasswordReset(this.email);
+}

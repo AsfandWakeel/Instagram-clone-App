@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:instagram/features/authentication/presentation/login_screen.dart';
+import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
+  static const routeName = '/splash';
   const SplashScreen({super.key});
 
   @override
@@ -12,20 +13,20 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _navigateToLogin();
+  }
 
-    Future.delayed(const Duration(seconds: 5), () {
+  void _navigateToLogin() {
+    Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
+      Navigator.pushReplacementNamed(context, LoginScreen.routeName);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEEF2F7),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -41,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            const CircularProgressIndicator(),
+            const CircularProgressIndicator(color: Colors.black),
           ],
         ),
       ),

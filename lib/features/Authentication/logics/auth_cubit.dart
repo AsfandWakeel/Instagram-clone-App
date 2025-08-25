@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:instagram/features/Authentication/data/models/Repositories/auth_repository.dart';
+import 'package:instagram/features/Authentication/data/repositort/auth_repository.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
+import 'package:instagram/features/Authentication/data/models/user_model.dart';
 
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository authRepository;
@@ -12,7 +13,7 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       final user = await authRepository.signUp(email, password, username);
       if (user != null) {
-        emit(AuthAuthenticated(user));
+        emit(AuthLoggedIn(user: user));
       } else {
         emit(AuthError("Signup failed"));
       }
@@ -24,9 +25,9 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> login(String email, String password) async {
     emit(AuthLoading());
     try {
-      final user = await authRepository.login(email, password);
+      final user = await authRepository.loginWithEmail(email, password);
       if (user != null) {
-        emit(AuthAuthenticated(user));
+        emit(AuthLoggedIn(user: user));
       } else {
         emit(AuthError("Login failed"));
       }
@@ -35,8 +36,35 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> loginWithGoogle() async {
+    emit(AuthLoading());
+    try {
+      final userCred = await authRepository.loginWithGoogle();
+      if (userCred == null) {
+        emit(AuthError('Google Sign In Failed'));
+        return;
+      }
+
+      final user = UserModel(
+        uid: userCred.user!.uid,
+        email: userCred.user!.email ?? '',
+        username: userCred.user!.displayName ?? '',
+        photoUrl: userCred.user!.photoURL,
+      );
+
+      emit(AuthLoggedIn(user: user));
+    } catch (e) {
+      emit(AuthError(e.toString()));
+    }
+  }
+
   Future<void> logout() async {
-    await authRepository.logout();
-    emit(AuthLoggedOut());
+    emit(AuthLoading());
+    try {
+      await authRepository.logout();
+      emit(AuthLoggedOut());
+    } catch (e) {
+      emit(AuthError("Logout failed: ${e.toString()}"));
+    }
   }
 }

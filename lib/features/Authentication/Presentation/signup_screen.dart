@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:instagram/features/Home/home_screen.dart';
+import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
+  static const routeName = '/signup';
   const SignupScreen({super.key});
 
   @override
@@ -14,12 +15,10 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   bool _isLoading = false;
 
-  Future<void> signup() async {
+  Future<void> _signup() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
 
     try {
@@ -33,14 +32,12 @@ class _SignupScreenState extends State<SignupScreen> {
       await credential.user!.reload();
 
       if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
+      // Navigate to LoginScreen after successful signup
+      Navigator.pushReplacementNamed(context, LoginScreen.routeName);
     } on FirebaseAuthException catch (e) {
       String msg = "Signup failed";
       if (e.code == 'email-already-in-use') msg = "Email already in use";
+
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -130,10 +127,11 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   const SizedBox(height: 30),
                   ElevatedButton(
-                    onPressed: _isLoading ? null : signup,
+                    onPressed: _isLoading ? null : _signup,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -150,7 +148,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     children: [
                       const Text("Already have an account? "),
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => Navigator.pushReplacementNamed(
+                          context,
+                          LoginScreen.routeName,
+                        ),
                         child: const Text(
                           "Login",
                           style: TextStyle(color: Colors.blue),

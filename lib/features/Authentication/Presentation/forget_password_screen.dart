@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
+  static const routeName = '/forgotPassword';
   const ForgotPasswordScreen({super.key});
 
   @override
@@ -9,8 +10,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
-  final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
   bool _isSending = false;
 
   Future<void> _sendResetLink() async {
@@ -28,7 +29,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Reset email sent. Check your inbox.'),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.black,
         ),
       );
 
@@ -42,7 +43,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
       );
     } finally {
-      setState(() => _isSending = false);
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -50,6 +51,58 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  Widget _buildTextField() {
+    return TextFormField(
+      controller: _emailController,
+      keyboardType: TextInputType.emailAddress,
+      decoration: const InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: Icon(Icons.email_outlined),
+        labelText: 'Email',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please enter your email';
+        } else if (!value.contains('@')) {
+          return 'Enter a valid email';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: _isSending ? null : _sendResetLink,
+        icon: _isSending
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Icon(Icons.send),
+        label: Text(_isSending ? "Sending..." : "Send"),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -67,54 +120,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Enter your email to receive a password reset link.',
+                    'Enter your email',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 30),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.email_outlined),
-                      labelText: 'Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your email';
-                      } else if (!value.contains('@')) {
-                        return 'Enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
+                  _buildTextField(),
                   const SizedBox(height: 30),
-                  ElevatedButton.icon(
-                    onPressed: _isSending ? null : _sendResetLink,
-                    icon: _isSending
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.send),
-                    label: Text(_isSending ? "Sending..." : "Send Reset Link"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                  _buildButton(),
                 ],
               ),
             ),
