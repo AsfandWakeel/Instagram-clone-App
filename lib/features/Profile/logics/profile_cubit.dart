@@ -16,13 +16,6 @@ class ProfileCubit extends Cubit<ProfileState> {
       final profile = await repository.getUserProfile(uid);
       if (profile != null) {
         emit(ProfileLoaded(user: profile, isCurrentUser: uid == currentUserId));
-      } else {
-        emit(
-          ProfileLoaded(
-            user: ProfileModel.dummy(uid: uid, isSelf: uid == currentUserId),
-            isCurrentUser: uid == currentUserId,
-          ),
-        );
       }
     } catch (e) {
       emit(ProfileError(e.toString()));
