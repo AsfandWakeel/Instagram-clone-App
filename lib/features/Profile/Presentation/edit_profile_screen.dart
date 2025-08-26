@@ -46,17 +46,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(15),
         children: [
           CircleAvatar(
-            radius: 20,
-            backgroundImage: widget.user.photoUrl.isNotEmpty
-                ? NetworkImage(widget.user.photoUrl)
-                : null,
-            child: widget.user.photoUrl.isEmpty
-                ? const Icon(Icons.person, size: 50)
-                : null,
+            radius: 40,
+            backgroundColor: Colors.grey[300],
+            child: ClipOval(
+              child: widget.user.photoUrl.isNotEmpty
+                  ? Image.network(widget.user.photoUrl, fit: BoxFit.cover)
+                  : const Icon(Icons.person, size: 40),
+            ),
           ),
+
           const SizedBox(height: 16),
           TextField(
             controller: _usernameController,

@@ -69,15 +69,4 @@ class ProfileModel {
       'isPrivate': isPrivate,
     };
   }
-
-  factory ProfileModel.dummy({required String uid, bool isSelf = true}) {
-    return ProfileModel(
-      uid: uid,
-      username: isSelf ? "your_name" : "user_$uid",
-      bio: "Be Honest • Flutter Developer ",
-      photoUrl: "",
-      followers: isSelf ? ["u2", "u3"] : ["u1"],
-      following: isSelf ? ["u4"] : [],
-    );
-  }
 }
