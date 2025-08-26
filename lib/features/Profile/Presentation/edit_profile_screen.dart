@@ -3,6 +3,7 @@ import 'package:instagram/features/Profile/Data/profile_model.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final ProfileModel user;
+
   const EditProfileScreen({super.key, required this.user});
 
   @override
@@ -10,21 +11,32 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late final TextEditingController _usernameController;
-  late final TextEditingController _bioController;
+  late TextEditingController usernameController;
+  late TextEditingController bioController;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _usernameController = TextEditingController(text: widget.user.username);
-    _bioController = TextEditingController(text: widget.user.bio);
+    usernameController = TextEditingController(text: widget.user.username);
+    bioController = TextEditingController(text: widget.user.bio);
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
-    _bioController.dispose();
+    usernameController.dispose();
+    bioController.dispose();
     super.dispose();
+  }
+
+  void _saveProfile() {
+    if (_formKey.currentState!.validate()) {
+      final updatedUser = widget.user.copyWith(
+        username: usernameController.text.trim(),
+        bio: bioController.text.trim(),
+      );
+      Navigator.pop(context, updatedUser);
+    }
   }
 
   @override
@@ -34,40 +46,54 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text("Edit Profile"),
         actions: [
           TextButton(
-            onPressed: () {
-              final updated = widget.user.copyWith(
-                username: _usernameController.text.trim(),
-                bio: _bioController.text.trim(),
-              );
-              Navigator.pop(context, updated);
-            },
-            child: const Text("Done"),
+            onPressed: _saveProfile,
+            child: const Text("Done", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
-      body: ListView(
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: widget.user.photoUrl.isNotEmpty
-                ? NetworkImage(widget.user.photoUrl)
-                : null,
-            child: widget.user.photoUrl.isEmpty
-                ? const Icon(Icons.person, size: 50)
-                : null,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: widget.user.photoUrl.isNotEmpty
+                    ? NetworkImage(widget.user.photoUrl)
+                    : null,
+                child: widget.user.photoUrl.isEmpty
+                    ? const Icon(Icons.person, size: 50)
+                    : null,
+              ),
+              const SizedBox(height: 24),
+
+              TextFormField(
+                controller: usernameController,
+                decoration: const InputDecoration(
+                  labelText: "Username",
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return "Username cannot be empty";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              TextFormField(
+                controller: bioController,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: "Bio",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(labelText: "Username"),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _bioController,
-            decoration: const InputDecoration(labelText: "Bio"),
-          ),
-        ],
+        ),
       ),
     );
   }

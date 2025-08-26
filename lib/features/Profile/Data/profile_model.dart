@@ -78,11 +78,6 @@ class ProfileModel {
       photoUrl: "",
       followers: isSelf ? ["u2", "u3"] : ["u1"],
       following: isSelf ? ["u4"] : [],
-      posts: const [
-        "https://picsum.photos/seed/p1/600",
-        "https://picsum.photos/seed/p2/600",
-        "https://picsum.photos/seed/p3/600",
-      ],
     );
   }
 }

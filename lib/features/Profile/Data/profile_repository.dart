@@ -3,13 +3,16 @@ import 'package:instagram/features/Profile/Data/profile_model.dart';
 
 class ProfileRepository {
   final FirebaseFirestore firestore;
+
   ProfileRepository({required this.firestore});
 
   Future<ProfileModel?> getUserProfile(String uid) async {
     final doc = await firestore.collection("users").doc(uid).get();
+
     if (doc.exists) {
       return ProfileModel.fromMap(doc.data()!);
     }
+
     return null;
   }
 
@@ -24,40 +27,32 @@ class ProfileRepository {
     required String currentUid,
     required String targetUid,
   }) async {
-    final currentRef = firestore.collection("users").doc(currentUid);
-    final targetRef = firestore.collection("users").doc(targetUid);
+    final currentUserRef = firestore.collection("users").doc(currentUid);
+    final targetUserRef = firestore.collection("users").doc(targetUid);
 
-    await firestore.runTransaction((tx) async {
-      final currentSnap = await tx.get(currentRef);
-      final targetSnap = await tx.get(targetRef);
+    await firestore.runTransaction((transaction) async {
+      final currentSnap = await transaction.get(currentUserRef);
+      final targetSnap = await transaction.get(targetUserRef);
 
       if (!currentSnap.exists || !targetSnap.exists) return;
 
       final following = List<String>.from(currentSnap['following'] ?? []);
 
       if (following.contains(targetUid)) {
-        // Unfollow
-        tx.update(currentRef, {
+        transaction.update(currentUserRef, {
           'following': FieldValue.arrayRemove([targetUid]),
         });
-        tx.update(targetRef, {
+        transaction.update(targetUserRef, {
           'followers': FieldValue.arrayRemove([currentUid]),
         });
       } else {
-        tx.update(currentRef, {
+        transaction.update(currentUserRef, {
           'following': FieldValue.arrayUnion([targetUid]),
         });
-        tx.update(targetRef, {
+        transaction.update(targetUserRef, {
           'followers': FieldValue.arrayUnion([currentUid]),
         });
       }
     });
-  }
-
-  Future<String> uploadProfileImagePlaceholder(
-    String uid,
-    String localFilePath,
-  ) async {
-    return "https://via.placeholder.com/150.png?text=Profile";
   }
 }

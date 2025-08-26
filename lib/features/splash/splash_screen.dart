@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
+import 'package:instagram/features/Home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   static const routeName = '/splash';
@@ -13,14 +15,25 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _navigateBasedOnAuth();
   }
 
-  void _navigateToLogin() {
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
+  void _navigateBasedOnAuth() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (!mounted) return;
+
+    if (user != null) {
+      Navigator.pushReplacementNamed(
+        context,
+        HomeScreen.routeName,
+        arguments: user.uid,
+      );
+    } else {
       Navigator.pushReplacementNamed(context, LoginScreen.routeName);
-    });
+    }
   }
 
   @override

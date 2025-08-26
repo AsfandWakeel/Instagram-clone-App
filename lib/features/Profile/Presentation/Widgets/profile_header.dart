@@ -4,15 +4,15 @@ import 'package:instagram/features/Profile/Data/profile_model.dart';
 class ProfileHeader extends StatelessWidget {
   final ProfileModel user;
   final bool isCurrentUser;
-  final VoidCallback? onFollowToggle;
   final VoidCallback? onEdit;
+  final VoidCallback? onFollowToggle;
 
   const ProfileHeader({
     super.key,
     required this.user,
-    this.isCurrentUser = false,
-    this.onFollowToggle,
+    required this.isCurrentUser,
     this.onEdit,
+    this.onFollowToggle,
   });
 
   @override
@@ -29,11 +29,13 @@ class ProfileHeader extends StatelessWidget {
               : null,
         ),
         const SizedBox(height: 10),
+
         Text(
           user.username,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 6),
+
         if (user.bio.isNotEmpty)
           Text(
             user.bio,
@@ -41,37 +43,35 @@ class ProfileHeader extends StatelessWidget {
             style: const TextStyle(color: Colors.grey),
           ),
         const SizedBox(height: 12),
+
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildStat("Posts", user.postsCount.toString()),
-            _buildStat("Followers", user.followersCount.toString()),
-            _buildStat("Following", user.followingCount.toString()),
+            _stat("Posts", user.postsCount),
+            _stat("Followers", user.followersCount),
+            _stat("Following", user.followingCount),
           ],
         ),
         const SizedBox(height: 12),
-        isCurrentUser
-            ? ElevatedButton(
-                onPressed: onEdit,
-                child: const Text("Edit Profile"),
-              )
-            : ElevatedButton(
-                onPressed: onFollowToggle,
-                child: Text(
-                  user.followers.contains(user.uid) ? "Unfollow" : "Follow",
-                ),
-              ),
+
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: isCurrentUser ? onEdit : onFollowToggle,
+            child: Text(isCurrentUser ? "Edit Profile" : "Follow"),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildStat(String label, String count) {
+  Widget _stat(String label, int count) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [
           Text(
-            count,
+            "$count",
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           Text(label),

@@ -16,15 +16,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Map<String, String>> _feedPosts = List.generate(
-    10,
-    (index) => {
-      "username": "user$index",
-      "image": "https://picsum.photos/seed/${index + 1}/400/400",
-      "caption": "This is post number $index",
-    },
-  );
-
   List<Widget> _screens() => [
     _feedScreen(),
     _searchScreen(),
@@ -41,55 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _feedScreen() {
-    return RefreshIndicator(
-      onRefresh: () async {
-        await Future.delayed(const Duration(seconds: 1));
-        setState(() {});
-      },
-      child: ListView.builder(
-        itemCount: _feedPosts.length,
-        itemBuilder: (context, index) {
-          final post = _feedPosts[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            elevation: 3,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(
-                      "https://picsum.photos/seed/avatar$index/50/50",
-                    ),
-                  ),
-                  title: Text(post["username"] ?? "Unknown"),
-                  trailing: const Icon(Icons.more_vert),
-                ),
-                Image.network(post["image"] ?? "", fit: BoxFit.cover),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(post["caption"] ?? ""),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Row(
-                    children: const [
-                      Icon(Icons.favorite_border),
-                      SizedBox(width: 8),
-                      Icon(Icons.comment),
-                      SizedBox(width: 8),
-                      Icon(Icons.share),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          );
-        },
+    return const Center(
+      child: Text(
+        "No posts yet",
+        style: TextStyle(fontSize: 18, color: Colors.grey),
       ),
     );
   }
@@ -134,18 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: _screens()[_selectedIndex],
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Add new post feature coming soon!"),
-                  ),
-                );
-              },
-              child: const Icon(Icons.add),
-            )
-          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
