@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "119689245322",
-    "project_id": "instagram-7ec52",
-    "storage_bucket": "instagram-7ec52.firebasestorage.app"
+    "project_number": "900281794396",
+    "project_id": "insta-clone-60b13",
+    "storage_bucket": "insta-clone-60b13.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:119689245322:android:9d04e7db551d853b64f373",
+        "mobilesdk_app_id": "1:900281794396:android:37388a3028c9eaaf264b99",
         "android_client_info": {
           "package_name": "com.example.instagram"
         }
       },
       "oauth_client": [
         {
-          "client_id": "119689245322-545b5sknkn7sel5hlj79pnmh68k0t05b.apps.googleusercontent.com",
+          "client_id": "900281794396-ei4jpjbhcndb308ipahdki8d2187c4i9.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCzQA1BWH2xx2Fk4zSDeADK5yC9YO4Ed5M"
+          "current_key": "AIzaSyBJFPoI35m6XkR1ZcxCaIpz4Ieq6bFhWfI"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "119689245322-545b5sknkn7sel5hlj79pnmh68k0t05b.apps.googleusercontent.com",
+              "client_id": "900281794396-ei4jpjbhcndb308ipahdki8d2187c4i9.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

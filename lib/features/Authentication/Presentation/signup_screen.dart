@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
+import 'package:instagram/core/utils/auth_validators.dart';
 
 class SignupScreen extends StatefulWidget {
   static const routeName = '/signup';
@@ -22,21 +23,33 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final credential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
+      final email = _emailController.text.trim().toLowerCase();
+      final password = _passwordController.text.trim();
+      final name = _nameController.text.trim();
 
-      await credential.user!.updateDisplayName(_nameController.text.trim());
-      await credential.user!.reload();
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      await cred.user!.updateDisplayName(name);
+      await cred.user!.reload();
+
+      await FirebaseAuth.instance.signOut();
 
       if (!mounted) return;
-      // Navigate to LoginScreen after successful signup
-      Navigator.pushReplacementNamed(context, LoginScreen.routeName);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Signup successful! Please login.")),
+      );
+
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(LoginScreen.routeName, (route) => false);
     } on FirebaseAuthException catch (e) {
       String msg = "Signup failed";
       if (e.code == 'email-already-in-use') msg = "Email already in use";
+      if (e.code == 'invalid-email') msg = "Invalid email address";
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -80,6 +93,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 40),
+
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -91,12 +105,14 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
                     ),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Enter your full name' : null,
+                    validator: AuthValidators.validateUsername,
                   ),
                   const SizedBox(height: 20),
+
                   TextFormField(
                     controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: const InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
@@ -106,10 +122,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
                     ),
-                    validator: (value) =>
-                        value!.isEmpty ? 'Enter your email' : null,
+                    validator: AuthValidators.validateEmail,
                   ),
                   const SizedBox(height: 20),
+
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,
@@ -122,36 +138,42 @@ class _SignupScreenState extends State<SignupScreen> {
                         borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
                     ),
-                    validator: (value) =>
-                        value!.length < 6 ? 'Minimum 6 characters' : null,
+                    validator: AuthValidators.validatePassword,
                   ),
                   const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _signup,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _signup,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            )
+                          : const Text("Sign Up"),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation(Colors.white),
-                          )
-                        : const Text("Sign Up"),
                   ),
+
                   const SizedBox(height: 20),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const Text("Already have an account? "),
                       GestureDetector(
-                        onTap: () => Navigator.pushReplacementNamed(
-                          context,
-                          LoginScreen.routeName,
-                        ),
+                        onTap: () =>
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              LoginScreen.routeName,
+                              (route) => false,
+                            ),
                         child: const Text(
                           "Login",
                           style: TextStyle(color: Colors.blue),

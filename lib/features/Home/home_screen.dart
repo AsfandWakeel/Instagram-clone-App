@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
+import 'package:instagram/features/Post/Presentation/post_list_screen.dart';
+import 'package:instagram/features/Post/Presentation/create_post_screen.dart';
 import 'package:instagram/features/Profile/Presentation/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,29 +20,22 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  List<Widget> _screens() => [
-    _feedScreen(),
-    _searchScreen(),
-    _postScreen(),
-    ProfileScreen(
-      uid: widget.currentUserId,
-      currentUserId: widget.currentUserId,
-    ),
-  ];
+  List<Widget> get _screens {
+    return [
+      const PostListScreen(), // ✅ Iske andar hi loader hoga
+      _searchScreen(),
+      CreatePostScreen(currentUserId: widget.currentUserId),
+      ProfileScreen(
+        uid: widget.currentUserId,
+        currentUserId: widget.currentUserId,
+      ),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  Widget _feedScreen() {
-    return const Center(
-      child: Text(
-        "No posts yet",
-        style: TextStyle(fontSize: 18, color: Colors.grey),
-      ),
-    );
   }
 
   Widget _searchScreen() {
@@ -53,12 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
               hintText: "Search users or posts",
               prefixIcon: const Icon(Icons.search),
               filled: true,
-              fillColor: Colors.grey,
-              border: OutlineInputBorder(
+              fillColor: Colors.grey[200],
+              border: const OutlineInputBorder(
                 borderRadius: BorderRadius.all(Radius.circular(12)),
                 borderSide: BorderSide.none,
               ),
             ),
+            onChanged: (query) {},
           ),
         ),
         const Expanded(
@@ -68,18 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _postScreen() {
-    return const Center(
-      child: Text(
-        "Post screen",
-        style: TextStyle(fontSize: 18, color: Colors.grey),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, dynamic>(
+    return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthLoggedOut) {
           Navigator.pushReplacement(
@@ -104,7 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: _screens()[_selectedIndex],
+        body:
+            _screens[_selectedIndex], // ✅ Ab har screen apna data handle karegi
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,

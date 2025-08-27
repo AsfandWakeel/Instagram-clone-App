@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/features/Profile/Data/profile_repository.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
@@ -16,6 +17,8 @@ class ProfileCubit extends Cubit<ProfileState> {
       final profile = await repository.getUserProfile(uid);
       if (profile != null) {
         emit(ProfileLoaded(user: profile, isCurrentUser: uid == currentUserId));
+      } else {
+        emit(const ProfileError("User not found"));
       }
     } catch (e) {
       emit(ProfileError(e.toString()));
@@ -40,6 +43,21 @@ class ProfileCubit extends Cubit<ProfileState> {
       await loadUserProfile(updated.uid);
     } catch (e) {
       emit(ProfileError(e.toString()));
+    }
+  }
+
+  Future<String> updateProfilePhoto(File file, String uid) async {
+    emit(const ProfileLoading());
+    try {
+      final downloadUrl = await repository.updateProfilePhoto(
+        uid: uid,
+        file: file,
+      );
+      await loadUserProfile(uid);
+      return downloadUrl;
+    } catch (e) {
+      emit(ProfileError(e.toString()));
+      rethrow;
     }
   }
 }

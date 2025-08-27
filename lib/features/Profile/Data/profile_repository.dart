@@ -1,18 +1,19 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
+import 'package:instagram/services/firebase_storage.dart';
 
 class ProfileRepository {
   final FirebaseFirestore firestore;
+  final FirebaseStorageService storage;
 
-  ProfileRepository({required this.firestore});
+  ProfileRepository({required this.firestore, required this.storage});
 
   Future<ProfileModel?> getUserProfile(String uid) async {
     final doc = await firestore.collection("users").doc(uid).get();
-
     if (doc.exists) {
       return ProfileModel.fromMap(doc.data()!);
     }
-
     return null;
   }
 
@@ -21,6 +22,20 @@ class ProfileRepository {
         .collection("users")
         .doc(profile.uid)
         .set(profile.toMap(), SetOptions(merge: true));
+  }
+
+  Future<String> updateProfilePhoto({
+    required String uid,
+    required File file,
+  }) async {
+    final folder = "profile_images/$uid";
+    final downloadUrl = await storage.uploadFile(file: file, folder: folder);
+
+    await firestore.collection("users").doc(uid).update({
+      "photoUrl": downloadUrl,
+    });
+
+    return downloadUrl;
   }
 
   Future<void> followUser({

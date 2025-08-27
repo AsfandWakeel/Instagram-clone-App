@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:instagram/features/Authentication/data/repositort/auth_repository.dart';
+import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
 import 'package:instagram/features/Authentication/data/models/user_model.dart';
 
@@ -18,7 +18,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthError("Signup failed"));
       }
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError("Signup error: $e"));
     }
   }
 
@@ -32,7 +32,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(AuthError("Login failed"));
       }
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError("Login error: $e"));
     }
   }
 
@@ -40,7 +40,7 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthLoading());
     try {
       final userCred = await authRepository.loginWithGoogle();
-      if (userCred == null) {
+      if (userCred == null || userCred.user == null) {
         emit(AuthError('Google Sign In Failed'));
         return;
       }
@@ -54,7 +54,7 @@ class AuthCubit extends Cubit<AuthState> {
 
       emit(AuthLoggedIn(user: user));
     } catch (e) {
-      emit(AuthError(e.toString()));
+      emit(AuthError("Google login error: $e"));
     }
   }
 
@@ -64,7 +64,7 @@ class AuthCubit extends Cubit<AuthState> {
       await authRepository.logout();
       emit(AuthLoggedOut());
     } catch (e) {
-      emit(AuthError("Logout failed: ${e.toString()}"));
+      emit(AuthError("Logout failed: $e"));
     }
   }
 }

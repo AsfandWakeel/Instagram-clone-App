@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:instagram/features/Post/Data/post_repository.dart';
+import 'package:instagram/features/Post/logics/post_state.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
 import 'package:instagram/features/Profile/Data/profile_repository.dart';
 import 'package:instagram/features/Profile/logics/profile_cubit.dart';
 import 'package:instagram/features/Profile/logics/profile_state.dart';
+import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:instagram/services/firebase_storage.dart';
 
 class ProfileScreen extends StatelessWidget {
   final String uid;
@@ -19,11 +23,19 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ProfileCubit(
-        repository: ProfileRepository(firestore: FirebaseFirestore.instance),
-        currentUserId: currentUserId,
-      )..loadUserProfile(uid),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => ProfileCubit(
+            repository: ProfileRepository(
+              firestore: FirebaseFirestore.instance,
+              storage: FirebaseStorageService.instance,
+            ),
+            currentUserId: currentUserId,
+          )..loadUserProfile(uid),
+        ),
+        BlocProvider(create: (_) => PostCubit(PostRepository())..fetchPosts()),
+      ],
       child: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           if (state is ProfileLoading) {
@@ -34,14 +46,19 @@ class ProfileScreen extends StatelessWidget {
 
           if (state is ProfileLoaded) {
             final user = state.user;
+
             return Scaffold(
-              appBar: AppBar(title: Text(user.username)),
+              appBar: AppBar(
+                title: Text(user.username),
+                automaticallyImplyLeading: false,
+              ),
               body: ListView(
                 children: [
-                  _header(context, user, state.isCurrentUser),
+                  _header(context, user),
                   _bio(user),
                   _actions(context, user, state.isCurrentUser),
                   const Divider(),
+                  _userPostsGrid(context, user.uid),
                 ],
               ),
             );
@@ -59,13 +76,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _header(BuildContext ctx, ProfileModel user, bool isSelf) {
+  Widget _header(BuildContext ctx, ProfileModel user) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           CircleAvatar(
-            radius: 40,
+            radius: 45,
             backgroundImage: user.photoUrl.isNotEmpty
                 ? NetworkImage(user.photoUrl)
                 : null,
@@ -96,9 +113,13 @@ class ProfileScreen extends StatelessWidget {
       children: [
         Text(
           user.username,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        if (user.bio.isNotEmpty) Text(user.bio),
+        if (user.bio.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(user.bio),
+          ),
       ],
     ),
   );
@@ -127,8 +148,47 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _stat(String label, int count) => Column(
     children: [
-      Text("$count", style: const TextStyle(fontWeight: FontWeight.bold)),
+      Text(
+        "$count",
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
       Text(label),
     ],
   );
+
+  // Grid view of user posts
+  Widget _userPostsGrid(BuildContext ctx, String userId) {
+    return BlocBuilder<PostCubit, PostState>(
+      builder: (context, state) {
+        List posts = [];
+
+        if (state is PostLoaded) {
+          posts = ctx.read<PostCubit>().getUserPosts(userId);
+        }
+
+        if (posts.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: Text("No posts yet")),
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(8),
+          itemCount: posts.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 4,
+            mainAxisSpacing: 4,
+          ),
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return Image.network(post.imageUrl, fit: BoxFit.cover);
+          },
+        );
+      },
+    );
+  }
 }

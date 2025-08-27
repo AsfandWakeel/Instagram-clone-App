@@ -53,10 +53,10 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCzQA1BWH2xx2Fk4zSDeADK5yC9YO4Ed5M',
-    appId: '1:119689245322:android:9d04e7db551d853b64f373',
-    messagingSenderId: '119689245322',
-    projectId: 'instagram-7ec52',
-    storageBucket: 'instagram-7ec52.firebasestorage.app',
+    apiKey: 'AIzaSyBJFPoI35m6XkR1ZcxCaIpz4Ieq6bFhWfI',
+    appId: '1:900281794396:android:37388a3028c9eaaf264b99',
+    messagingSenderId: '900281794396',
+    projectId: 'insta-clone-60b13',
+    storageBucket: 'insta-clone-60b13.firebasestorage.app',
   );
 }

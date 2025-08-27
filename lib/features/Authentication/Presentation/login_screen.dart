@@ -6,9 +6,10 @@ import 'package:instagram/features/Authentication/logics/auth_state.dart';
 import 'package:instagram/features/Authentication/Presentation/forget_password_screen.dart';
 import 'package:instagram/features/Authentication/Presentation/signup_screen.dart';
 import 'package:instagram/features/Home/home_screen.dart';
+import 'package:instagram/core/utils/auth_validators.dart';
 
 class LoginScreen extends StatefulWidget {
-  static const routeName = '/login'; // Fixed routeName
+  static const routeName = '/login';
   const LoginScreen({super.key});
 
   @override
@@ -29,7 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _loginWithEmail() {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
+
     context.read<AuthCubit>().login(
       _emailController.text.trim(),
       _passwordController.text.trim(),
@@ -37,6 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _loginWithGoogle() {
+    if (_isLoading) return;
     context.read<AuthCubit>().loginWithGoogle();
   }
 
@@ -78,8 +82,13 @@ class _LoginScreenState extends State<LoginScreen> {
       child: ElevatedButton.icon(
         icon: icon != null ? FaIcon(icon, size: 20) : const SizedBox.shrink(),
         label: loading
-            ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation(Colors.white),
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(Colors.white),
+                ),
               )
             : Text(label),
         onPressed: loading ? null : onPressed,
@@ -109,6 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         } else if (state is AuthError) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
@@ -139,10 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        validator: (value) =>
-                            value != null && value.contains("@")
-                            ? null
-                            : "Enter valid email",
+                        validator: AuthValidators.validateEmail,
                       ),
                       const SizedBox(height: 20),
                       _buildTextField(
@@ -150,9 +157,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         label: 'Password',
                         icon: Icons.lock_outline,
                         obscureText: true,
-                        validator: (value) => value != null && value.length >= 6
-                            ? null
-                            : "Minimum 6 characters",
+                        validator: AuthValidators.validatePassword,
                       ),
                       const SizedBox(height: 30),
                       _buildButton(
