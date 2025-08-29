@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'post_model.dart';
+import 'package:instagram/features/Post/Data/post_model.dart';
 
 class PostRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -22,9 +22,7 @@ class PostRepository {
     }
 
     final newPost = post.copyWith(imageUrl: imageUrl);
-
     final docRef = await _firestore.collection('posts').add(newPost.toMap());
-
     return newPost.copyWith(id: docRef.id);
   }
 
@@ -33,9 +31,7 @@ class PostRepository {
     if (imageFile != null) {
       imageUrl = await _uploadPostImage(imageFile, post.userId);
     }
-
     final updatedPost = post.copyWith(imageUrl: imageUrl);
-
     await _firestore
         .collection('posts')
         .doc(post.id)
@@ -43,7 +39,20 @@ class PostRepository {
   }
 
   Future<void> deletePost(String postId) async {
-    await _firestore.collection('posts').doc(postId).delete();
+    final docRef = _firestore.collection('posts').doc(postId);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      final data = docSnap.data()!;
+      final imageUrl = data['imageUrl'] ?? '';
+      if (imageUrl.isNotEmpty) {
+        try {
+          final ref = _storage.refFromURL(imageUrl);
+          await ref.delete();
+        } catch (_) {}
+      }
+      await docRef.delete();
+    }
   }
 
   Stream<List<PostModel>> getPosts() {
@@ -58,26 +67,32 @@ class PostRepository {
         );
   }
 
-  List<PostModel> filterPostsByUser(List<PostModel> posts, String userId) {
-    return posts.where((post) => post.userId == userId).toList();
-  }
+  Future<void> likePost(String postId, String userId) async {
+    final docRef = _firestore.collection('posts').doc(postId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
 
-  Future<void> likePost(String postId, String userId, bool isLiked) async {
-    final postRef = _firestore.collection('posts').doc(postId);
-    if (isLiked) {
-      await postRef.update({
+    final likes = List<String>.from(doc['likes'] ?? []);
+    if (likes.contains(userId)) {
+      await docRef.update({
         'likes': FieldValue.arrayRemove([userId]),
       });
     } else {
-      await postRef.update({
+      await docRef.update({
         'likes': FieldValue.arrayUnion([userId]),
       });
     }
   }
 
-  Future<void> addComment(String postId, Map<String, dynamic> comment) async {
-    await _firestore.collection('posts').doc(postId).update({
-      'comments': FieldValue.arrayUnion([comment]),
+  Future<void> addComment(String postId, String userId, String comment) async {
+    final docRef = _firestore.collection('posts').doc(postId);
+    final commentData = {
+      'userId': userId,
+      'comment': comment,
+      'createdAt': Timestamp.now(),
+    };
+    await docRef.update({
+      'comments': FieldValue.arrayUnion([commentData]),
     });
   }
 }

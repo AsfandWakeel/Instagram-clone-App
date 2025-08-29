@@ -43,17 +43,17 @@ class ProfileCubit extends Cubit<ProfileState> {
       await loadUserProfile(updated.uid);
     } catch (e) {
       emit(ProfileError(e.toString()));
+      rethrow;
     }
   }
 
-  Future<String> updateProfilePhoto(File file, String uid) async {
-    emit(const ProfileLoading());
+  /// Directly upload a profile photo using the repository
+  Future<String> uploadProfilePhoto(File file, String uid) async {
     try {
       final downloadUrl = await repository.updateProfilePhoto(
         uid: uid,
         file: file,
       );
-      await loadUserProfile(uid);
       return downloadUrl;
     } catch (e) {
       emit(ProfileError(e.toString()));

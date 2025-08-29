@@ -17,18 +17,22 @@ class FirebaseStorageService {
   Future<String> uploadFile({
     required File file,
     required String folder,
-    String? oldFilePath,
+    String? oldFileUrl,
   }) async {
     try {
       final fileName = "${_uuid.v4()}${path.extension(file.path)}";
       final ref = _storage.ref().child("$folder/$fileName");
 
-      final mimeType = lookupMimeType(file.path);
+      final mimeType = lookupMimeType(file.path) ?? 'application/octet-stream';
 
       final uploadTask = await ref.putFile(
         file,
         SettableMetadata(contentType: mimeType),
       );
+
+      if (oldFileUrl != null && oldFileUrl.isNotEmpty) {
+        await deleteFile(oldFileUrl);
+      }
 
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {
@@ -40,7 +44,7 @@ class FirebaseStorageService {
     required Uint8List data,
     required String folder,
     String? fileExtension,
-    String? oldFilePath,
+    String? oldFileUrl,
   }) async {
     try {
       final ext = fileExtension ?? ".jpg";
@@ -49,14 +53,30 @@ class FirebaseStorageService {
 
       final uploadTask = await ref.putData(
         data,
-        SettableMetadata(contentType: lookupMimeType(fileName)),
+        SettableMetadata(
+          contentType: lookupMimeType(fileName) ?? 'application/octet-stream',
+        ),
       );
 
-      if (oldFilePath != null && oldFilePath.isNotEmpty) {}
+      if (oldFileUrl != null && oldFileUrl.isNotEmpty) {
+        await deleteFile(oldFileUrl);
+      }
 
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {
       throw Exception("Upload bytes failed: $e");
+    }
+  }
+
+  Future<void> deleteFile(String fileUrl) async {
+    try {
+      final ref = _storage.refFromURL(fileUrl);
+      await ref.delete();
+    } catch (e) {
+      if (e is FirebaseException && e.code == 'object-not-found') {
+        return;
+      }
+      throw Exception("Delete failed: $e");
     }
   }
 
@@ -66,18 +86,6 @@ class FirebaseStorageService {
       return await ref.getDownloadURL();
     } catch (e) {
       throw Exception("Get URL failed: $e");
-    }
-  }
-
-  Future<void> deleteFile(String storagePath) async {
-    try {
-      final ref = _storage.ref().child(storagePath);
-      await ref.delete();
-    } catch (e) {
-      if (e is FirebaseException && e.code == "object-not-found") {
-        return;
-      }
-      throw Exception("Delete failed: $e");
     }
   }
 }

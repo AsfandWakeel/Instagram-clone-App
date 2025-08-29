@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
 import 'firebase_options.dart';
-import 'package:instagram/features/splash/splash_screen.dart';
-import 'package:instagram/Services/firebase_auth_service.dart';
-import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
-import 'package:instagram/features/Authentication/Presentation/forget_password_screen.dart';
-import 'package:instagram/features/Authentication/Presentation/signup_screen.dart';
-import 'package:instagram/features/Home/home_screen.dart';
-import 'features/Authentication/logics/auth_cubit.dart';
+import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
+import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'package:instagram/features/Post/Data/post_repository.dart';
+import 'package:instagram/features/Feed/logics/feed_cubit.dart';
+import 'package:instagram/Services/firebase_auth_service.dart';
+import 'package:instagram/core/theme/app_theme.dart';
+import 'package:instagram/core/routes/app_routes.dart';
+import 'package:instagram/features/splash/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,58 +23,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final postRepository = PostRepository();
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
           create: (_) =>
               AuthCubit(authRepository: AuthRepository(FirebaseAuthService())),
         ),
-        BlocProvider(create: (_) => PostCubit(PostRepository())),
+        BlocProvider(create: (_) => PostCubit(postRepository)),
+        BlocProvider(create: (_) => FeedCubit(postRepository)), // FeedCubit
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Instagram',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          scaffoldBackgroundColor: Colors.white,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-          ),
-        ),
+        theme: AppTheme.lightTheme,
         darkTheme: ThemeData.dark(),
         themeMode: ThemeMode.system,
         initialRoute: SplashScreen.routeName,
-        onGenerateRoute: _generateRoute,
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
     );
-  }
-
-  Route<dynamic>? _generateRoute(RouteSettings settings) {
-    switch (settings.name) {
-      case SplashScreen.routeName:
-        return MaterialPageRoute(builder: (_) => const SplashScreen());
-
-      case LoginScreen.routeName:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-
-      case SignupScreen.routeName:
-        return MaterialPageRoute(builder: (_) => const SignupScreen());
-
-      case ForgotPasswordScreen.routeName:
-        return MaterialPageRoute(builder: (_) => const ForgotPasswordScreen());
-
-      case HomeScreen.routeName:
-        final currentUserId = settings.arguments as String?;
-        if (currentUserId != null) {
-          return MaterialPageRoute(
-            builder: (_) => HomeScreen(currentUserId: currentUserId),
-          );
-        }
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-
-      default:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
-    }
   }
 }

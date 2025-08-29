@@ -40,40 +40,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       imageQuality: 80,
     );
     if (picked != null && mounted) {
-      setState(() {
-        _selectedImage = File(picked.path);
-      });
+      setState(() => _selectedImage = File(picked.path));
     }
   }
 
   Future<void> _onDone() async {
     if (_isSaving) return;
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     try {
-      String newPhotoUrl = widget.user.photoUrl;
       final cubit = context.read<ProfileCubit>();
+      String newPhotoUrl = widget.user.photoUrl;
 
-      // Update profile photo first
       if (_selectedImage != null) {
-        final downloaded = await cubit.updateProfilePhoto(
+        final uploadedUrl = await cubit.uploadProfilePhoto(
           _selectedImage!,
           widget.user.uid,
         );
-        newPhotoUrl = downloaded;
+        newPhotoUrl = uploadedUrl;
       }
 
-      // Update username & bio
+      // Create updated profile
       final updated = widget.user.copyWith(
         username: _usernameController.text.trim(),
         bio: _bioController.text.trim(),
         photoUrl: newPhotoUrl,
       );
 
-      // Save edits safely
       await cubit.saveEdits(updated);
 
       if (!mounted) return;
@@ -85,9 +79,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
     } finally {
       if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -97,7 +89,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: true,
         actions: [
           TextButton(
             onPressed: _onDone,
@@ -107,7 +99,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text("Done"),
+                : const Text("Done", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PostModel {
   final String id;
   final String userId;
-  final String username;
+  final String profileName;
   final String userPhotoUrl;
   final String imageUrl;
   final String caption;
@@ -14,7 +14,7 @@ class PostModel {
   PostModel({
     required this.id,
     required this.userId,
-    required this.username,
+    required this.profileName,
     required this.userPhotoUrl,
     required this.imageUrl,
     required this.caption,
@@ -26,7 +26,7 @@ class PostModel {
   PostModel copyWith({
     String? id,
     String? userId,
-    String? username,
+    String? profileName,
     String? userPhotoUrl,
     String? imageUrl,
     String? caption,
@@ -37,7 +37,7 @@ class PostModel {
     return PostModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
-      username: username ?? this.username,
+      profileName: profileName ?? this.profileName,
       userPhotoUrl: userPhotoUrl ?? this.userPhotoUrl,
       imageUrl: imageUrl ?? this.imageUrl,
       caption: caption ?? this.caption,
@@ -50,11 +50,11 @@ class PostModel {
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
-      'username': username,
+      'profileName': profileName,
       'userPhotoUrl': userPhotoUrl,
       'imageUrl': imageUrl,
       'caption': caption,
-      'createdAt': Timestamp.fromDate(createdAt), // ✅ save as Timestamp
+      'createdAt': Timestamp.fromDate(createdAt),
       'likes': likes,
       'comments': comments,
     };
@@ -64,13 +64,12 @@ class PostModel {
     return PostModel(
       id: id,
       userId: map['userId'] ?? '',
-      username: map['username'] ?? '',
+      profileName: map['profileName'] ?? '',
       userPhotoUrl: map['userPhotoUrl'] ?? '',
       imageUrl: map['imageUrl'] ?? '',
       caption: map['caption'] ?? '',
       createdAt: (map['createdAt'] is Timestamp)
-          ? (map['createdAt'] as Timestamp)
-                .toDate() // ✅ convert Timestamp → DateTime
+          ? (map['createdAt'] as Timestamp).toDate()
           : DateTime.tryParse(map['createdAt'] ?? '') ?? DateTime.now(),
       likes: List<String>.from(map['likes'] ?? []),
       comments: List<Map<String, dynamic>>.from(map['comments'] ?? []),

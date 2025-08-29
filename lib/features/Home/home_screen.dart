@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
-import 'package:instagram/features/Post/Presentation/post_list_screen.dart';
+import 'package:instagram/features/Feed/presentation/feed_screen.dart';
 import 'package:instagram/features/Post/Presentation/create_post_screen.dart';
 import 'package:instagram/features/Profile/Presentation/profile_screen.dart';
 
@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> get _screens {
     return [
-      const PostListScreen(), // ✅ Iske andar hi loader hoga
+      FeedScreen(currentUserId: widget.currentUserId), // Updated
       _searchScreen(),
       CreatePostScreen(currentUserId: widget.currentUserId),
       ProfileScreen(
@@ -91,8 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body:
-            _screens[_selectedIndex], // ✅ Ab har screen apna data handle karegi
+        body: _screens[_selectedIndex],
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,

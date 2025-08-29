@@ -18,6 +18,7 @@ class EditPostScreen extends StatefulWidget {
 class _EditPostScreenState extends State<EditPostScreen> {
   late TextEditingController _captionController;
   File? _newImage;
+  bool _isUpdating = false;
 
   @override
   void initState() {
@@ -25,37 +26,56 @@ class _EditPostScreenState extends State<EditPostScreen> {
     super.initState();
   }
 
+  @override
+  void dispose() {
+    _captionController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(
       source: ImageSource.gallery,
     );
-    if (pickedFile != null) {
+    if (pickedFile != null && mounted) {
       setState(() {
         _newImage = File(pickedFile.path);
       });
     }
   }
 
-  void _updatePost() {
+  Future<void> _updatePost() async {
+    if (_isUpdating) return;
+
+    setState(() => _isUpdating = true);
+
     final updatedPost = PostModel(
       id: widget.post.id,
       userId: widget.post.userId,
-      username: widget.post.username,
+      profileName: widget.post.profileName,
       userPhotoUrl: widget.post.userPhotoUrl,
       imageUrl: widget.post.imageUrl,
-      caption: _captionController.text,
+      caption: _captionController.text.trim(),
       createdAt: widget.post.createdAt,
       likes: widget.post.likes,
       comments: widget.post.comments,
     );
 
-    context.read<PostCubit>().updatePost(updatedPost, imageFile: _newImage);
+    try {
+      await context.read<PostCubit>().updatePost(
+        updatedPost,
+        imageFile: _newImage,
+      );
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocListener<PostCubit, PostState>(
       listener: (context, state) {
+        if (!mounted) return;
+
         if (state is PostSuccess) {
           Navigator.pop(context);
           ScaffoldMessenger.of(
@@ -76,11 +96,32 @@ class _EditPostScreenState extends State<EditPostScreen> {
               GestureDetector(
                 onTap: _pickImage,
                 child: _newImage != null
-                    ? Image.file(_newImage!, height: 200, fit: BoxFit.cover)
-                    : Image.network(
-                        widget.post.imageUrl,
-                        height: 200,
-                        fit: BoxFit.cover,
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(
+                          _newImage!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          widget.post.imageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, progress) {
+                            if (progress == null) return child;
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                          errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.broken_image, size: 50),
+                          ),
+                        ),
                       ),
               ),
               const SizedBox(height: 16),
@@ -89,7 +130,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 hintText: 'Edit your caption...',
               ),
               const SizedBox(height: 16),
-              AppButton(text: 'Update', onPressed: _updatePost),
+              AppButton(
+                text: _isUpdating ? 'Updating...' : 'Update',
+                onPressed: _isUpdating ? null : _updatePost,
+              ),
             ],
           ),
         ),
@@ -129,7 +173,7 @@ class AppTextField extends StatelessWidget {
 
 class AppButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   const AppButton({super.key, required this.text, required this.onPressed});
 

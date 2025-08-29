@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:instagram/features/Post/Data/post_model.dart';
 import 'package:instagram/features/Post/Data/post_repository.dart';
+import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'package:instagram/features/Post/logics/post_state.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
 import 'package:instagram/features/Profile/Data/profile_repository.dart';
 import 'package:instagram/features/Profile/logics/profile_cubit.dart';
 import 'package:instagram/features/Profile/logics/profile_state.dart';
-import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'edit_profile_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:instagram/services/firebase_storage.dart';
@@ -51,6 +52,7 @@ class ProfileScreen extends StatelessWidget {
               appBar: AppBar(
                 title: Text(user.username),
                 automaticallyImplyLeading: false,
+                centerTitle: false,
               ),
               body: ListView(
                 children: [
@@ -156,14 +158,13 @@ class ProfileScreen extends StatelessWidget {
     ],
   );
 
-  // Grid view of user posts
   Widget _userPostsGrid(BuildContext ctx, String userId) {
     return BlocBuilder<PostCubit, PostState>(
       builder: (context, state) {
-        List posts = [];
+        List<PostModel> posts = [];
 
         if (state is PostLoaded) {
-          posts = ctx.read<PostCubit>().getUserPosts(userId);
+          posts = ctx.read<PostCubit>().getUserPosts(state.posts, userId);
         }
 
         if (posts.isEmpty) {
@@ -185,7 +186,40 @@ class ProfileScreen extends StatelessWidget {
           ),
           itemBuilder: (context, index) {
             final post = posts[index];
-            return Image.network(post.imageUrl, fit: BoxFit.cover);
+            final isSelf = userId == currentUserId;
+
+            return GestureDetector(
+              onLongPress: isSelf
+                  ? () {
+                      showDialog(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text("Delete Post"),
+                          content: const Text(
+                            "Are you sure you want to delete this post?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                context.read<PostCubit>().deletePost(post.id);
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Delete",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  : null,
+              child: Image.network(post.imageUrl, fit: BoxFit.cover),
+            );
           },
         );
       },

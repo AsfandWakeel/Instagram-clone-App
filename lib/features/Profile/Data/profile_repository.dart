@@ -10,18 +10,26 @@ class ProfileRepository {
   ProfileRepository({required this.firestore, required this.storage});
 
   Future<ProfileModel?> getUserProfile(String uid) async {
-    final doc = await firestore.collection("users").doc(uid).get();
-    if (doc.exists) {
-      return ProfileModel.fromMap(doc.data()!);
+    try {
+      final doc = await firestore.collection("users").doc(uid).get();
+      if (doc.exists && doc.data() != null) {
+        return ProfileModel.fromMap(doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      rethrow;
     }
-    return null;
   }
 
   Future<void> updateProfile(ProfileModel profile) async {
-    await firestore
-        .collection("users")
-        .doc(profile.uid)
-        .set(profile.toMap(), SetOptions(merge: true));
+    try {
+      await firestore
+          .collection("users")
+          .doc(profile.uid)
+          .set(profile.toMap(), SetOptions(merge: true));
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<String> updateProfilePhoto({
@@ -30,11 +38,9 @@ class ProfileRepository {
   }) async {
     final folder = "profile_images/$uid";
     final downloadUrl = await storage.uploadFile(file: file, folder: folder);
-
     await firestore.collection("users").doc(uid).update({
       "photoUrl": downloadUrl,
     });
-
     return downloadUrl;
   }
 
@@ -51,7 +57,9 @@ class ProfileRepository {
 
       if (!currentSnap.exists || !targetSnap.exists) return;
 
-      final following = List<String>.from(currentSnap['following'] ?? []);
+      final following = List<String>.from(
+        currentSnap.data()?['following'] ?? [],
+      );
 
       if (following.contains(targetUid)) {
         transaction.update(currentUserRef, {

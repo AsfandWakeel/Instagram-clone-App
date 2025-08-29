@@ -34,17 +34,26 @@ class PostCard extends StatelessWidget {
         children: [
           ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(post.userPhotoUrl),
+              backgroundImage: post.userPhotoUrl.isNotEmpty
+                  ? NetworkImage(post.userPhotoUrl)
+                  : null,
+              child: post.userPhotoUrl.isEmpty
+                  ? const Icon(Icons.person)
+                  : null,
             ),
-            title: Text(post.username),
+            title: Text(
+              post.profileName.isNotEmpty ? post.profileName : "Unknown User",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
 
           networkImage(post.imageUrl),
 
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(post.caption),
-          ),
+          if (post.caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(post.caption),
+            ),
 
           Row(
             children: [
