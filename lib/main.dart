@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:instagram/Services/notification_services.dart';
+import 'package:instagram/features/notifications/logics/notification_cubit.dart';
 import 'firebase_options.dart';
 import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
@@ -32,7 +34,11 @@ class MyApp extends StatelessWidget {
               AuthCubit(authRepository: AuthRepository(FirebaseAuthService())),
         ),
         BlocProvider(create: (_) => PostCubit(postRepository)),
-        BlocProvider(create: (_) => FeedCubit(postRepository)), // FeedCubit
+        BlocProvider(create: (_) => FeedCubit(postRepository)),
+        BlocProvider(
+          create: (_) =>
+              NotificationCubit(notificationService: NotificationService()),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

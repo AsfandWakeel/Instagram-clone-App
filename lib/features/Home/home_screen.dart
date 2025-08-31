@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
 import 'package:instagram/features/Feed/presentation/feed_screen.dart';
 import 'package:instagram/features/Post/Presentation/create_post_screen.dart';
 import 'package:instagram/features/Profile/Presentation/profile_screen.dart';
+import 'package:instagram/features/notifications/presentation/notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
@@ -19,10 +21,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  String _searchQuery = "";
 
   List<Widget> get _screens {
     return [
-      FeedScreen(currentUserId: widget.currentUserId), // Updated
+      FeedScreen(currentUserId: widget.currentUserId),
       _searchScreen(),
       CreatePostScreen(currentUserId: widget.currentUserId),
       ProfileScreen(
@@ -45,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.all(12.0),
           child: TextField(
             decoration: InputDecoration(
-              hintText: "Search users or posts",
+              hintText: "Search users",
               prefixIcon: const Icon(Icons.search),
               filled: true,
               fillColor: Colors.grey[200],
@@ -54,11 +57,62 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderSide: BorderSide.none,
               ),
             ),
-            onChanged: (query) {},
+            onChanged: (query) {
+              setState(() => _searchQuery = query.trim());
+            },
           ),
         ),
-        const Expanded(
-          child: Center(child: Text("Search results will appear here")),
+        Expanded(
+          child: _searchQuery.isEmpty
+              ? const Center(child: Text("Search results will appear here"))
+              : StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .where('username', isGreaterThanOrEqualTo: _searchQuery)
+                      .where(
+                        'username',
+                        isLessThanOrEqualTo: '$_searchQuery\uf8ff',
+                      )
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final users = snapshot.data!.docs;
+                    if (users.isEmpty) {
+                      return const Center(child: Text("No users found"));
+                    }
+                    return ListView.builder(
+                      itemCount: users.length,
+                      itemBuilder: (context, index) {
+                        final user = users[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage: user['photoUrl'] != ""
+                                ? NetworkImage(user['photoUrl'])
+                                : null,
+                            child: user['photoUrl'] == ""
+                                ? const Icon(Icons.person)
+                                : null,
+                          ),
+                          title: Text(user['username']),
+                          subtitle: Text(user['email']),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProfileScreen(
+                                  uid: user['uid'],
+                                  currentUserId: widget.currentUserId,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -84,6 +138,19 @@ class _HomeScreenState extends State<HomeScreen> {
           title: const Text("Instagram"),
           actions: [
             IconButton(
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NotificationsScreen(
+                      currentUserId: widget.currentUserId,
+                    ),
+                  ),
+                );
+              },
+            ),
+            IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {
                 context.read<AuthCubit>().logout();
@@ -99,10 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add_box),
-              label: "Add Post",
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.add_box), label: "Add"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
         ),

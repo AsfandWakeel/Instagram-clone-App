@@ -16,13 +16,31 @@ class PostRepository {
   }
 
   Future<PostModel> createPost(PostModel post, {File? imageFile}) async {
+    // 🔹 Step 1: Get user data from users collection
+    final userDoc = await _firestore.collection('users').doc(post.userId).get();
+
+    final userData = userDoc.data() ?? {};
+
+    // 🔹 Step 2: Set profile info from user document
+    final profileName = userData['username'] ?? 'Unknown';
+    final userPhotoUrl = userData['profileImage'] ?? '';
+
+    // 🔹 Step 3: Upload image if provided
     String imageUrl = post.imageUrl;
     if (imageFile != null) {
       imageUrl = await _uploadPostImage(imageFile, post.userId);
     }
 
-    final newPost = post.copyWith(imageUrl: imageUrl);
+    // 🔹 Step 4: Create final PostModel with user info
+    final newPost = post.copyWith(
+      imageUrl: imageUrl,
+      profileName: profileName,
+      userPhotoUrl: userPhotoUrl,
+    );
+
+    // 🔹 Step 5: Save to Firestore
     final docRef = await _firestore.collection('posts').add(newPost.toMap());
+
     return newPost.copyWith(id: docRef.id);
   }
 
@@ -86,11 +104,19 @@ class PostRepository {
 
   Future<void> addComment(String postId, String userId, String comment) async {
     final docRef = _firestore.collection('posts').doc(postId);
+
+    // fetch username + photo for comments also (like insta)
+    final userDoc = await _firestore.collection('users').doc(userId).get();
+    final userData = userDoc.data() ?? {};
+
     final commentData = {
       'userId': userId,
+      'username': userData['username'] ?? 'Unknown',
+      'userPhotoUrl': userData['profileImage'] ?? '',
       'comment': comment,
       'createdAt': Timestamp.now(),
     };
+
     await docRef.update({
       'comments': FieldValue.arrayUnion([commentData]),
     });

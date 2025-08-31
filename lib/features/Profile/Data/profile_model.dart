@@ -44,9 +44,12 @@ class ProfileModel {
     );
   }
 
-  factory ProfileModel.fromMap(Map<String, dynamic> map) {
+  factory ProfileModel.fromMap(
+    Map<String, dynamic> map, {
+    required String uid,
+  }) {
     return ProfileModel(
-      uid: map['uid'] ?? '',
+      uid: uid,
       username: map['username'] ?? '',
       bio: map['bio'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
@@ -59,7 +62,6 @@ class ProfileModel {
 
   Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
       'username': username,
       'bio': bio,
       'photoUrl': photoUrl,

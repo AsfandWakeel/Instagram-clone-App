@@ -13,7 +13,7 @@ class ProfileRepository {
     try {
       final doc = await firestore.collection("users").doc(uid).get();
       if (doc.exists && doc.data() != null) {
-        return ProfileModel.fromMap(doc.data()!);
+        return ProfileModel.fromMap(doc.data()!, uid: doc.id);
       }
       return null;
     } catch (e) {

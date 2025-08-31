@@ -109,7 +109,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text("Create Post"), centerTitle: true),
+        appBar: AppBar(
+          title: const Text("Create Post"),
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

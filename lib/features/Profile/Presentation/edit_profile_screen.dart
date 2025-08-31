@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
 import 'package:instagram/features/Profile/logics/profile_cubit.dart';
+import 'package:instagram/features/Profile/logics/profile_state.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final ProfileModel user;
+
   const EditProfileScreen({super.key, required this.user});
 
   @override
@@ -14,10 +16,10 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  late final TextEditingController _usernameController;
-  late final TextEditingController _bioController;
-  File? _selectedImage;
-  bool _isSaving = false;
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _usernameController;
+  late TextEditingController _bioController;
+  File? _imageFile;
 
   @override
   void initState() {
@@ -34,53 +36,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (picked != null && mounted) {
-      setState(() => _selectedImage = File(picked.path));
-    }
-  }
-
-  Future<void> _onDone() async {
-    if (_isSaving) return;
-
-    setState(() => _isSaving = true);
-
-    try {
-      final cubit = context.read<ProfileCubit>();
-      String newPhotoUrl = widget.user.photoUrl;
-
-      if (_selectedImage != null) {
-        final uploadedUrl = await cubit.uploadProfilePhoto(
-          _selectedImage!,
-          widget.user.uid,
-        );
-        newPhotoUrl = uploadedUrl;
-      }
-
-      // Create updated profile
-      final updated = widget.user.copyWith(
-        username: _usernameController.text.trim(),
-        bio: _bioController.text.trim(),
-        photoUrl: newPhotoUrl,
-      );
-
-      await cubit.saveEdits(updated);
-
-      if (!mounted) return;
-      Navigator.pop(context, updated);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to update profile: $e')));
-    } finally {
-      if (mounted) {
-        setState(() => _isSaving = false);
-      }
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      setState(() {
+        _imageFile = File(picked.path);
+      });
     }
   }
 
@@ -89,50 +49,99 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Edit Profile"),
-        automaticallyImplyLeading: true,
-        actions: [
-          TextButton(
-            onPressed: _onDone,
-            child: _isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text("Done", style: TextStyle(color: Colors.white)),
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(15),
-        children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.grey[300],
-              backgroundImage: _selectedImage != null
-                  ? FileImage(_selectedImage!)
-                  : (widget.user.photoUrl.isNotEmpty
-                            ? NetworkImage(widget.user.photoUrl)
-                            : null)
-                        as ImageProvider<Object>?,
-              child: (_selectedImage == null && widget.user.photoUrl.isEmpty)
-                  ? const Icon(Icons.person, size: 40)
-                  : null,
+      body: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, state) {
+          if (state is ProfileLoaded) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Profile updated successfully")),
+            );
+            Navigator.pop(context, state.user);
+          } else if (state is ProfileError) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+          }
+        },
+        builder: (context, state) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                children: [
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundImage: _imageFile != null
+                          ? FileImage(_imageFile!)
+                          : (widget.user.photoUrl.isNotEmpty
+                                    ? NetworkImage(widget.user.photoUrl)
+                                    : const AssetImage(
+                                        "assets/default_avatar.png",
+                                      ))
+                                as ImageProvider,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(labelText: "Username"),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter a username";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _bioController,
+                    decoration: const InputDecoration(labelText: "Bio"),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        String photoUrl = widget.user.photoUrl;
+                        final profileCubit = context.read<ProfileCubit>();
+
+                        // agar naya photo select hua hai to upload karo
+                        if (_imageFile != null) {
+                          photoUrl = await profileCubit.uploadProfilePhoto(
+                            _imageFile!,
+                            widget.user.uid,
+                          );
+                        }
+
+                        // updated profile banate hain
+                        final updatedProfile = widget.user.copyWith(
+                          username: _usernameController.text,
+                          bio: _bioController.text,
+                          photoUrl: photoUrl,
+                        );
+
+                        // cubit se save karo
+                        await profileCubit.saveEdits(updatedProfile);
+
+                        // context ka safe use
+                        if (!mounted) return;
+                      }
+                    },
+                    child: state is ProfileLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Save"),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _usernameController,
-            decoration: const InputDecoration(labelText: "Username"),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _bioController,
-            decoration: const InputDecoration(labelText: "Bio"),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

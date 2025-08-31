@@ -13,7 +13,6 @@ class PostCubit extends Cubit<PostState> {
 
   void fetchPosts() {
     emit(PostLoading());
-
     _subscription?.cancel();
 
     _subscription = _repository.getPosts().listen(
@@ -25,7 +24,7 @@ class PostCubit extends Cubit<PostState> {
   Future<void> createPost(PostModel post, {File? imageFile}) async {
     try {
       await _repository.createPost(post, imageFile: imageFile);
-      emit(PostSuccess("Post created successfully"));
+      emit(PostSuccess("✅ Post created successfully"));
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -34,7 +33,7 @@ class PostCubit extends Cubit<PostState> {
   Future<void> updatePost(PostModel post, {File? imageFile}) async {
     try {
       await _repository.updatePost(post, imageFile: imageFile);
-      emit(PostSuccess("Post updated successfully"));
+      emit(PostSuccess("✅ Post updated successfully"));
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -43,7 +42,7 @@ class PostCubit extends Cubit<PostState> {
   Future<void> deletePost(String postId) async {
     try {
       await _repository.deletePost(postId);
-      emit(PostSuccess("Post deleted successfully"));
+      emit(PostSuccess("🗑️ Post deleted successfully"));
     } catch (e) {
       emit(PostError(e.toString()));
     }

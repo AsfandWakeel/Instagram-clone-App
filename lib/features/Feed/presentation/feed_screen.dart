@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/features/Feed/logics/feed_cubit.dart';
 import 'package:instagram/features/Feed/logics/feed_state.dart';
-import 'package:instagram/features/Feed/presentation/widgets/feed_post_tile.dart';
+import 'package:instagram/features/Post/Presentation/widgets/post_card.dart';
 
 class FeedScreen extends StatefulWidget {
   final String currentUserId;
@@ -45,8 +45,7 @@ class _FeedScreenState extends State<FeedScreen> {
               itemCount: posts.length,
               itemBuilder: (context, index) {
                 final post = posts[index];
-
-                return FeedPostTile(
+                return PostCard(
                   post: post,
                   currentUserId: widget.currentUserId,
                 );

@@ -88,7 +88,10 @@ class _EditPostScreenState extends State<EditPostScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Edit Post')),
+        appBar: AppBar(
+          title: const Text('Edit Post'),
+          automaticallyImplyLeading: false,
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
