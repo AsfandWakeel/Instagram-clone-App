@@ -4,7 +4,7 @@ class NotificationModel {
   final String id;
   final String senderId;
   final String receiverId;
-  final String type; // like, comment, follow
+  final String type;
   final String? postId;
   final String message;
   final DateTime createdAt;

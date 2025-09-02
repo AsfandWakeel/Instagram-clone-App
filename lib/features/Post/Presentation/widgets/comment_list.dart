@@ -7,19 +7,30 @@ class CommentList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    if (comments.isEmpty) {
+      return const Center(child: Text("No comments yet"));
+    }
+
+    return ListView.builder(
       itemCount: comments.length,
-      separatorBuilder: (_, __) => const Divider(),
-      itemBuilder: (_, index) {
+      itemBuilder: (context, index) {
         final comment = comments[index];
+        final userName = comment['userName'] ?? "Unknown";
+        final text = comment['text'] ?? "";
+        final userPhotoUrl = comment['userPhotoUrl'] ?? "";
+
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(comment['userPhotoUrl'] ?? ''),
+            backgroundImage: userPhotoUrl.isNotEmpty
+                ? NetworkImage(userPhotoUrl)
+                : const AssetImage("assets/default_avatar.png")
+                      as ImageProvider,
           ),
-          title: Text(comment['username'] ?? ''),
-          subtitle: Text(comment['text'] ?? ''),
+          title: Text(
+            userName,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          subtitle: Text(text),
         );
       },
     );

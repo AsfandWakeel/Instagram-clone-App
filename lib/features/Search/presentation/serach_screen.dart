@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:instagram/Services/user_services.dart';
+import 'package:instagram/services/user_services.dart';
 import 'package:instagram/features/Profile/Presentation/profile_screen.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -15,17 +16,36 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Map<String, dynamic>> _results = [];
   bool _loading = false;
 
-  void _onSearchChanged(String value) async {
-    setState(() {
-      _loading = true;
-    });
+  Timer? _debounce;
 
-    final users = await _userService.searchUsers(value);
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
 
-    setState(() {
-      _results = users;
-      _loading = false;
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      if (value.isEmpty) {
+        setState(() {
+          _results = [];
+        });
+        return;
+      }
+
+      setState(() {
+        _loading = true;
+      });
+
+      final users = await _userService.searchUsers(value);
+      if (users == null) return;
+      setState(() {
+        _results = users;
+        _loading = false;
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
   }
 
   @override
@@ -59,12 +79,18 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemBuilder: (context, index) {
                     final user = _results[index];
 
+                    final profileImage =
+                        (user['profileImage'] != null &&
+                            user['profileImage'].isNotEmpty)
+                        ? user['profileImage']
+                        : null;
+
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundImage: user['profileImage'] != ""
-                            ? NetworkImage(user['profileImage'])
+                        backgroundImage: profileImage != null
+                            ? NetworkImage(profileImage)
                             : null,
-                        child: user['profileImage'] == ""
+                        child: profileImage == null
                             ? const Icon(Icons.person)
                             : null,
                       ),

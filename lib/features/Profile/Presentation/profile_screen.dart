@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:instagram/features/Post/Data/post_model.dart';
 import 'package:instagram/features/Post/Data/post_repository.dart';
 import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'package:instagram/features/Post/logics/post_state.dart';
@@ -161,67 +160,81 @@ class ProfileScreen extends StatelessWidget {
   Widget _userPostsGrid(BuildContext ctx, String userId) {
     return BlocBuilder<PostCubit, PostState>(
       builder: (context, state) {
-        List<PostModel> posts = [];
-
-        if (state is PostLoaded) {
-          posts = ctx.read<PostCubit>().getUserPosts(state.posts, userId);
-        }
-
-        if (posts.isEmpty) {
+        if (state is PostLoading) {
           return const Padding(
             padding: EdgeInsets.all(16.0),
-            child: Center(child: Text("No posts yet")),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
 
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(8),
-          itemCount: posts.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 4,
-            mainAxisSpacing: 4,
-          ),
-          itemBuilder: (context, index) {
-            final post = posts[index];
-            final isSelf = userId == currentUserId;
+        if (state is PostLoaded) {
+          final posts = ctx.read<PostCubit>().getUserPosts(state.posts, userId);
 
-            return GestureDetector(
-              onLongPress: isSelf
-                  ? () {
-                      showDialog(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text("Delete Post"),
-                          content: const Text(
-                            "Are you sure you want to delete this post?",
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text("Cancel"),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.read<PostCubit>().deletePost(post.id);
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                "Delete",
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                  : null,
-              child: Image.network(post.imageUrl, fit: BoxFit.cover),
+          if (posts.isEmpty) {
+            return const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: Text("No posts yet")),
             );
-          },
-        );
+          }
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(8),
+            itemCount: posts.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 4,
+              mainAxisSpacing: 4,
+            ),
+            itemBuilder: (context, index) {
+              final post = posts[index];
+              final isSelf = userId == currentUserId;
+
+              return GestureDetector(
+                onLongPress: isSelf
+                    ? () {
+                        showDialog(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text("Delete Post"),
+                            content: const Text(
+                              "Are you sure you want to delete this post?",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  context.read<PostCubit>().deletePost(post.id);
+                                  Navigator.pop(context);
+                                },
+                                child: const Text(
+                                  "Delete",
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    : null,
+                child: Image.network(post.imageUrl, fit: BoxFit.cover),
+              );
+            },
+          );
+        }
+
+        if (state is PostError) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(child: Text("Error: ${state.message}")),
+          );
+        }
+
+        return const SizedBox();
       },
     );
   }

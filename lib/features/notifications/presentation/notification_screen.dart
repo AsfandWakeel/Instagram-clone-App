@@ -4,15 +4,25 @@ import 'package:instagram/features/notifications/data/notification_model.dart';
 import 'package:instagram/features/notifications/logics/notification_cubit.dart';
 import 'package:instagram/features/notifications/logics/notification_state.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   final String currentUserId;
 
   const NotificationsScreen({super.key, required this.currentUserId});
 
   @override
-  Widget build(BuildContext context) {
-    context.read<NotificationCubit>().fetchNotifications(currentUserId);
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
 
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    context.read<NotificationCubit>().fetchNotifications(widget.currentUserId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Notifications"),

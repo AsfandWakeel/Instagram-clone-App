@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:instagram/Services/notification_services.dart';
-import 'package:instagram/features/notifications/logics/notification_cubit.dart';
-import 'firebase_options.dart';
-import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
-import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
-import 'package:instagram/features/Post/logics/post_cubit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:instagram/features/Post/Data/post_repository.dart';
-import 'package:instagram/features/Feed/logics/feed_cubit.dart';
-import 'package:instagram/Services/firebase_auth_service.dart';
-import 'package:instagram/core/theme/app_theme.dart';
+import 'package:instagram/services/firebase_auth_service.dart';
+import 'package:instagram/services/notification_services.dart';
+import 'package:instagram/services/firebase_storage.dart';
+import 'package:instagram/services/fcm_service.dart';
 import 'package:instagram/core/routes/app_routes.dart';
+import 'package:instagram/core/theme/app_theme.dart';
+import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
+import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
+import 'package:instagram/features/Feed/data/feed_repository.dart';
+import 'package:instagram/features/Post/logics/post_cubit.dart';
+import 'package:instagram/features/Feed/logics/feed_cubit.dart';
+import 'package:instagram/features/notifications/data/notification_repository.dart';
+import 'package:instagram/features/notifications/logics/notification_cubit.dart';
+import 'package:instagram/features/Profile/logics/profile_cubit.dart';
+import 'package:instagram/features/Profile/Data/profile_repository.dart';
 import 'package:instagram/features/splash/splash_screen.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp();
+  await FCMService.init();
   runApp(const MyApp());
 }
 
@@ -25,29 +33,72 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final postRepository = PostRepository();
-
-    return MultiBlocProvider(
+    return MultiRepositoryProvider(
       providers: [
-        BlocProvider(
-          create: (_) =>
-              AuthCubit(authRepository: AuthRepository(FirebaseAuthService())),
+        RepositoryProvider<FirebaseAuthService>(
+          create: (_) => FirebaseAuthService(),
         ),
-        BlocProvider(create: (_) => PostCubit(postRepository)),
-        BlocProvider(create: (_) => FeedCubit(postRepository)),
-        BlocProvider(
-          create: (_) =>
-              NotificationCubit(notificationService: NotificationService()),
+        RepositoryProvider<AuthRepository>(
+          create: (context) =>
+              AuthRepository(context.read<FirebaseAuthService>()),
+        ),
+        RepositoryProvider<PostRepository>(create: (_) => PostRepository()),
+        RepositoryProvider<FeedRepository>(create: (_) => FeedRepository()),
+        RepositoryProvider<NotificationService>(
+          create: (_) => NotificationService(),
+        ),
+        RepositoryProvider<NotificationRepository>(
+          create: (context) =>
+              NotificationRepository(context.read<NotificationService>()),
+        ),
+        RepositoryProvider<FirebaseStorageService>(
+          create: (_) => FirebaseStorageService.instance,
+        ),
+        RepositoryProvider<ProfileRepository>(
+          create: (context) => ProfileRepository(
+            firestore: FirebaseFirestore.instance,
+            storage: context.read<FirebaseStorageService>(),
+          ),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Instagram',
-        theme: AppTheme.lightTheme,
-        darkTheme: ThemeData.dark(),
-        themeMode: ThemeMode.system,
-        initialRoute: SplashScreen.routeName,
-        onGenerateRoute: AppRoutes.generateRoute,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthCubit>(
+            create: (context) =>
+                AuthCubit(authRepository: context.read<AuthRepository>()),
+          ),
+          BlocProvider<PostCubit>(
+            create: (context) => PostCubit(context.read<PostRepository>()),
+          ),
+          BlocProvider<NotificationCubit>(
+            create: (context) => NotificationCubit(
+              notificationRepository: context.read<NotificationRepository>(),
+            ),
+          ),
+          BlocProvider<FeedCubit>(
+            create: (context) => FeedCubit(
+              context.read<FeedRepository>(),
+              NotificationCubit(
+                notificationRepository: context.read<NotificationRepository>(),
+              ),
+            ),
+          ),
+          BlocProvider<ProfileCubit>(
+            create: (context) => ProfileCubit(
+              repository: context.read<ProfileRepository>(),
+              currentUserId: FirebaseAuth.instance.currentUser?.uid ?? "",
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Instagram Clone',
+          theme: AppTheme.lightTheme,
+          darkTheme: ThemeData.dark(),
+          themeMode: ThemeMode.system,
+          initialRoute: SplashScreen.routeName,
+          onGenerateRoute: AppRoutes.generateRoute,
+        ),
       ),
     );
   }

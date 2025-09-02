@@ -77,14 +77,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     onTap: _pickImage,
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundImage: _imageFile != null
-                          ? FileImage(_imageFile!)
-                          : (widget.user.photoUrl.isNotEmpty
-                                    ? NetworkImage(widget.user.photoUrl)
-                                    : const AssetImage(
-                                        "assets/default_avatar.png",
-                                      ))
-                                as ImageProvider,
+                      backgroundColor: Colors.grey.shade300,
+                      child: ClipOval(
+                        child: _imageFile != null
+                            ? Image.file(
+                                _imageFile!,
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              )
+                            : (widget.user.photoUrl.isNotEmpty
+                                  ? Image.network(
+                                      widget.user.photoUrl,
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      "assets/default_avatar.png",
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                    )),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -111,7 +126,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         String photoUrl = widget.user.photoUrl;
                         final profileCubit = context.read<ProfileCubit>();
 
-                        // agar naya photo select hua hai to upload karo
                         if (_imageFile != null) {
                           photoUrl = await profileCubit.uploadProfilePhoto(
                             _imageFile!,
@@ -119,17 +133,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           );
                         }
 
-                        // updated profile banate hain
                         final updatedProfile = widget.user.copyWith(
                           username: _usernameController.text,
                           bio: _bioController.text,
                           photoUrl: photoUrl,
                         );
 
-                        // cubit se save karo
                         await profileCubit.saveEdits(updatedProfile);
 
-                        // context ka safe use
                         if (!mounted) return;
                       }
                     },

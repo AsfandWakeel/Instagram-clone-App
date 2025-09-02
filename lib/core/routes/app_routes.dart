@@ -4,6 +4,7 @@ import 'package:instagram/features/Authentication/Presentation/login_screen.dart
 import 'package:instagram/features/Authentication/Presentation/signup_screen.dart';
 import 'package:instagram/features/Authentication/Presentation/forget_password_screen.dart';
 import 'package:instagram/features/Home/home_screen.dart';
+import 'package:instagram/features/Feed/presentation/feed_screen.dart';
 
 class AppRoutes {
   static Route<dynamic>? generateRoute(RouteSettings settings) {
@@ -28,6 +29,12 @@ class AppRoutes {
           );
         }
         return MaterialPageRoute(builder: (_) => const LoginScreen());
+
+      case FeedScreen.routeName:
+        final currentUserId = settings.arguments as String;
+        return MaterialPageRoute(
+          builder: (_) => FeedScreen(currentUserId: currentUserId),
+        );
 
       default:
         return MaterialPageRoute(builder: (_) => const LoginScreen());

@@ -4,10 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:instagram/features/Authentication/Presentation/login_screen.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Authentication/logics/auth_state.dart';
-import 'package:instagram/features/Feed/presentation/feed_screen.dart';
 import 'package:instagram/features/Post/Presentation/create_post_screen.dart';
 import 'package:instagram/features/Profile/Presentation/profile_screen.dart';
 import 'package:instagram/features/notifications/presentation/notification_screen.dart';
+import 'package:instagram/features/Feed/presentation/feed_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   static const routeName = '/home';
@@ -23,19 +23,18 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _searchQuery = "";
 
-  List<Widget> get _screens {
-    return [
-      FeedScreen(currentUserId: widget.currentUserId),
-      _searchScreen(),
-      CreatePostScreen(currentUserId: widget.currentUserId),
-      ProfileScreen(
-        uid: widget.currentUserId,
-        currentUserId: widget.currentUserId,
-      ),
-    ];
-  }
-
   void _onItemTapped(int index) {
+    if (index == 2) {
+      // ✅ Create post screen ko push karo
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CreatePostScreen(currentUserId: widget.currentUserId),
+        ),
+      );
+      return; // yaha index change nahi karna
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -74,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         isLessThanOrEqualTo: '$_searchQuery\uf8ff',
                       )
                       .snapshots(),
-                  builder: (context, snapshot) {
+                  builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
@@ -135,6 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: const Text("Instagram"),
           actions: [
             IconButton(
@@ -158,7 +158,19 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        body: _screens[_selectedIndex],
+        body: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            FeedScreen(currentUserId: widget.currentUserId), // 0
+            _searchScreen(), // 1
+            Container(),
+            ProfileScreen(
+              // 3
+              uid: widget.currentUserId,
+              currentUserId: widget.currentUserId,
+            ),
+          ],
+        ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,

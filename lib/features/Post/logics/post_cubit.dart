@@ -23,8 +23,14 @@ class PostCubit extends Cubit<PostState> {
 
   Future<void> createPost(PostModel post, {File? imageFile}) async {
     try {
-      await _repository.createPost(post, imageFile: imageFile);
-      emit(PostSuccess("✅ Post created successfully"));
+      final newPost = await _repository.createPost(post, imageFile: imageFile);
+
+      if (state is PostLoaded) {
+        final currentPosts = (state as PostLoaded).posts;
+        emit(PostLoaded([newPost, ...currentPosts]));
+      } else {
+        emit(PostSuccess("Post created successfully"));
+      }
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -33,7 +39,15 @@ class PostCubit extends Cubit<PostState> {
   Future<void> updatePost(PostModel post, {File? imageFile}) async {
     try {
       await _repository.updatePost(post, imageFile: imageFile);
-      emit(PostSuccess("✅ Post updated successfully"));
+
+      if (state is PostLoaded) {
+        final currentPosts = (state as PostLoaded).posts.map((p) {
+          return p.id == post.id ? post : p;
+        }).toList();
+        emit(PostLoaded(currentPosts));
+      } else {
+        emit(PostSuccess("Post updated successfully"));
+      }
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -42,7 +56,14 @@ class PostCubit extends Cubit<PostState> {
   Future<void> deletePost(String postId) async {
     try {
       await _repository.deletePost(postId);
-      emit(PostSuccess("🗑️ Post deleted successfully"));
+
+      if (state is PostLoaded) {
+        final currentPosts = (state as PostLoaded).posts;
+        final updatedPosts = currentPosts.where((p) => p.id != postId).toList();
+        emit(PostLoaded(updatedPosts));
+      } else {
+        emit(PostSuccess("Post deleted successfully"));
+      }
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -59,6 +80,28 @@ class PostCubit extends Cubit<PostState> {
   Future<void> addComment(String postId, String userId, String comment) async {
     try {
       await _repository.addComment(postId, userId, comment);
+
+      if (state is PostLoaded) {
+        final currentPosts = (state as PostLoaded).posts;
+        emit(PostLoaded(List<PostModel>.from(currentPosts)));
+      }
+    } catch (e) {
+      emit(PostError(e.toString()));
+    }
+  }
+
+  Future<void> toggleCommentLike(
+    String postId,
+    int commentIndex,
+    String userId,
+  ) async {
+    try {
+      await _repository.toggleCommentLike(postId, commentIndex, userId);
+
+      if (state is PostLoaded) {
+        final currentPosts = (state as PostLoaded).posts.map((p) => p).toList();
+        emit(PostLoaded(currentPosts));
+      }
     } catch (e) {
       emit(PostError(e.toString()));
     }

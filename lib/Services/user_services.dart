@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class UserService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+  Future<List<Map<String, dynamic>>?> searchUsers(String query) async {
     if (query.isEmpty) return [];
 
     final snapshot = await firestore
@@ -16,9 +16,9 @@ class UserService {
       final data = doc.data();
       return {
         'uid': doc.id,
-        'username': data['username'] ?? '',
-        'email': data['email'] ?? '',
-        'profileImage': data['profileImage'] ?? '',
+        'username': data['username']?.toString() ?? 'No name',
+        'email': data['email']?.toString() ?? '',
+        'profileImage': data['profileImage']?.toString() ?? '',
       };
     }).toList();
   }

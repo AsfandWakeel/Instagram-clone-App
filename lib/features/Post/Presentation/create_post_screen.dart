@@ -5,14 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:instagram/features/Post/Data/post_model.dart';
 import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'package:instagram/features/Post/logics/post_state.dart';
-import 'package:instagram/features/Profile/Data/profile_model.dart';
-import 'package:instagram/features/Profile/Data/profile_repository.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:instagram/services/firebase_storage.dart';
 
 class CreatePostScreen extends StatefulWidget {
   final String currentUserId;
-
   const CreatePostScreen({super.key, required this.currentUserId});
 
   @override
@@ -20,73 +15,107 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  final TextEditingController _captionController = TextEditingController();
-  File? _selectedImage;
-  bool _isPosting = false;
+  List<File> _imageFiles = [];
 
   @override
-  void dispose() {
-    _captionController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _pickImages();
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
+  Future<void> _pickImages() async {
+    final picker = ImagePicker();
+    final pickedFiles = await picker.pickMultiImage();
+
+    if (pickedFiles.isNotEmpty && mounted) {
+      setState(() {
+        _imageFiles = pickedFiles.map((e) => File(e.path)).toList();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_imageFiles.isEmpty) {
+      return Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: const Text("Create Post"),
+          automaticallyImplyLeading: false,
+        ),
+        body: Center(
+          child: InkWell(
+            onTap: _pickImages,
+            borderRadius: BorderRadius.circular(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: const [
+                Icon(
+                  Icons.photo_library_outlined,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 12),
+                Text(
+                  "New Post",
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return PostPreviewScreen(
+      currentUserId: widget.currentUserId,
+      imageFiles: _imageFiles,
     );
-
-    if (pickedFile != null && mounted) {
-      setState(() => _selectedImage = File(pickedFile.path));
-    }
   }
+}
 
-  Future<void> _createPost() async {
-    if (_selectedImage == null) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Please select an image")));
-      return;
-    }
+class PostPreviewScreen extends StatefulWidget {
+  final String currentUserId;
+  final List<File> imageFiles;
 
+  const PostPreviewScreen({
+    super.key,
+    required this.currentUserId,
+    required this.imageFiles,
+  });
+
+  @override
+  State<PostPreviewScreen> createState() => _PostPreviewScreenState();
+}
+
+class _PostPreviewScreenState extends State<PostPreviewScreen> {
+  final TextEditingController _captionController = TextEditingController();
+  bool _isPosting = false;
+
+  Future<void> _createPosts() async {
     if (_isPosting) return;
-
     setState(() => _isPosting = true);
 
     try {
       final postCubit = context.read<PostCubit>();
 
-      final profileRepo = ProfileRepository(
-        firestore: FirebaseFirestore.instance,
-        storage: FirebaseStorageService.instance,
-      );
-      final ProfileModel? profile = await profileRepo.getUserProfile(
-        widget.currentUserId,
-      );
-      if (profile == null) throw Exception("User profile not found");
+      for (final file in widget.imageFiles) {
+        final post = PostModel(
+          id: '',
+          userId: widget.currentUserId,
+          profileName: '',
+          userPhotoUrl: '',
+          imageUrl: '',
+          caption: _captionController.text.trim(),
+          createdAt: DateTime.now(),
+        );
 
-      final post = PostModel(
-        id: '',
-        userId: widget.currentUserId,
-        profileName: profile.username,
-        userPhotoUrl: profile.photoUrl,
-        imageUrl: '',
-        caption: _captionController.text.trim(),
-        createdAt: DateTime.now(),
-      );
-
-      await postCubit.createPost(post, imageFile: _selectedImage);
+        await postCubit.createPost(post, imageFile: file);
+      }
 
       if (!mounted) return;
-
-      setState(() {
-        _selectedImage = null;
-        _captionController.clear();
-      });
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Post created successfully!")),
+        const SnackBar(content: Text("Posts created successfully!")),
       );
     } catch (e) {
       if (!mounted) return;
@@ -109,105 +138,58 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Create Post"),
-          automaticallyImplyLeading: false,
-          centerTitle: true,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              GestureDetector(
-                onTap: _pickImage,
-                child: _selectedImage != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _selectedImage!,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.add_a_photo, size: 50),
-                        ),
-                      ),
+        appBar: AppBar(title: const Text("Preview")),
+        body: Column(
+          children: [
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 250,
+              child: PageView.builder(
+                itemCount: widget.imageFiles.length,
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      widget.imageFiles[index],
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 16),
-              AppTextField(
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: TextField(
                 controller: _captionController,
-                hintText: "Write a caption...",
+                decoration: InputDecoration(
+                  hintText: "Write a caption...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-              const SizedBox(height: 16),
-              AppButton(
-                text: _isPosting ? "Posting..." : "Post",
-                onPressed: _isPosting ? null : _createPost,
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: _isPosting ? null : _createPosts,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(_isPosting ? "Posting..." : "Post"),
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-class AppTextField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hintText;
-  final bool obscureText;
-
-  const AppTextField({
-    super.key,
-    required this.controller,
-    required this.hintText,
-    this.obscureText = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      decoration: InputDecoration(
-        hintText: hintText,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 10,
-        ),
-      ),
-    );
-  }
-}
-
-class AppButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
-
-  const AppButton({super.key, required this.text, required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(text, style: const TextStyle(fontSize: 16)),
       ),
     );
   }

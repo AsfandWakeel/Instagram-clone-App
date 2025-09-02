@@ -16,29 +16,23 @@ class PostRepository {
   }
 
   Future<PostModel> createPost(PostModel post, {File? imageFile}) async {
-    // 🔹 Step 1: Get user data from users collection
     final userDoc = await _firestore.collection('users').doc(post.userId).get();
-
     final userData = userDoc.data() ?? {};
 
-    // 🔹 Step 2: Set profile info from user document
-    final profileName = userData['username'] ?? 'Unknown';
-    final userPhotoUrl = userData['profileImage'] ?? '';
+    final profileName = userData['username'] ?? userData['name'] ?? 'Unknown';
+    final userPhotoUrl = userData['profileImage'] ?? userData['photoUrl'] ?? '';
 
-    // 🔹 Step 3: Upload image if provided
     String imageUrl = post.imageUrl;
     if (imageFile != null) {
       imageUrl = await _uploadPostImage(imageFile, post.userId);
     }
 
-    // 🔹 Step 4: Create final PostModel with user info
     final newPost = post.copyWith(
       imageUrl: imageUrl,
       profileName: profileName,
       userPhotoUrl: userPhotoUrl,
     );
 
-    // 🔹 Step 5: Save to Firestore
     final docRef = await _firestore.collection('posts').add(newPost.toMap());
 
     return newPost.copyWith(id: docRef.id);
@@ -105,20 +99,48 @@ class PostRepository {
   Future<void> addComment(String postId, String userId, String comment) async {
     final docRef = _firestore.collection('posts').doc(postId);
 
-    // fetch username + photo for comments also (like insta)
     final userDoc = await _firestore.collection('users').doc(userId).get();
     final userData = userDoc.data() ?? {};
 
     final commentData = {
       'userId': userId,
-      'username': userData['username'] ?? 'Unknown',
-      'userPhotoUrl': userData['profileImage'] ?? '',
+      'username': userData['username'] ?? userData['name'] ?? 'Unknown',
+      'userPhotoUrl': userData['profileImage'] ?? userData['photoUrl'] ?? '',
       'comment': comment,
+      'likedUsers': <String>[],
       'createdAt': Timestamp.now(),
     };
 
     await docRef.update({
       'comments': FieldValue.arrayUnion([commentData]),
     });
+  }
+
+  Future<void> toggleCommentLike(
+    String postId,
+    int commentIndex,
+    String userId,
+  ) async {
+    final docRef = _firestore.collection('posts').doc(postId);
+    final docSnap = await docRef.get();
+    if (!docSnap.exists) return;
+
+    final data = docSnap.data()!;
+    final comments = List<Map<String, dynamic>>.from(data['comments'] ?? []);
+
+    if (commentIndex < 0 || commentIndex >= comments.length) return;
+
+    final comment = comments[commentIndex];
+    final likedUsers = List<String>.from(comment['likedUsers'] ?? []);
+
+    if (likedUsers.contains(userId)) {
+      likedUsers.remove(userId);
+    } else {
+      likedUsers.add(userId);
+    }
+
+    comments[commentIndex] = {...comment, 'likedUsers': likedUsers};
+
+    await docRef.update({'comments': comments});
   }
 }

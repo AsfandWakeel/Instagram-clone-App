@@ -5,6 +5,8 @@ import 'package:instagram/features/Feed/logics/feed_state.dart';
 import 'package:instagram/features/Post/Presentation/widgets/post_card.dart';
 
 class FeedScreen extends StatefulWidget {
+  static const String routeName = '/feed';
+
   final String currentUserId;
 
   const FeedScreen({super.key, required this.currentUserId});
@@ -17,7 +19,9 @@ class _FeedScreenState extends State<FeedScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<FeedCubit>().fetchFeed();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FeedCubit>().fetchFeed();
+    });
   }
 
   @override
@@ -48,6 +52,18 @@ class _FeedScreenState extends State<FeedScreen> {
                 return PostCard(
                   post: post,
                   currentUserId: widget.currentUserId,
+                  onLike: () => context.read<FeedCubit>().likePost(
+                    post.id,
+                    widget.currentUserId,
+                    post.userId,
+                  ),
+                  onComment: (commentText) =>
+                      context.read<FeedCubit>().addComment(
+                        post.id,
+                        widget.currentUserId,
+                        commentText,
+                        post.userId,
+                      ),
                 );
               },
             );

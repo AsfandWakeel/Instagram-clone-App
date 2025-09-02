@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:instagram/Services/firebase_auth_service.dart';
+import 'package:instagram/services/firebase_auth_service.dart';
 import 'package:instagram/features/Authentication/data/models/user_model.dart';
 
 class AuthRepository {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:instagram/features/Feed/logics/feed_cubit.dart';
 import 'package:instagram/features/Post/Data/post_model.dart';
+import 'package:instagram/features/Post/Presentation/widgets/comment_list.dart';
+import 'package:instagram/features/Post/Presentation/widgets/like_button.dart';
 
 class FeedPostTile extends StatelessWidget {
   final PostModel post;
@@ -17,67 +19,77 @@ class FeedPostTile extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) {
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
         final TextEditingController commentController = TextEditingController();
-        return Padding(
-          padding: MediaQuery.of(context).viewInsets,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            height: 350,
-            child: Column(
+
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          builder: (_, controller) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Comments",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: post.comments.length,
-                    itemBuilder: (_, index) {
-                      final comment = post.comments[index];
-                      return ListTile(
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(
-                            comment['userPhotoUrl'] ?? '',
-                          ),
-                        ),
-                        title: Text(comment['username'] ?? ''),
-                        subtitle: Text(comment['text'] ?? ''),
-                      );
-                    },
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    "Comments",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                 ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: commentController,
-                        decoration: const InputDecoration(
-                          hintText: "Add a comment",
+                Expanded(child: CommentList(comments: post.comments)),
+                const Divider(height: 1),
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 8,
+                    right: 8,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 8,
+                    top: 8,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: commentController,
+                          decoration: InputDecoration(
+                            hintText: "Add a comment",
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () {
-                        final commentText = commentController.text.trim();
-                        if (commentText.isEmpty) return;
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        onPressed: () {
+                          final commentText = commentController.text.trim();
+                          if (commentText.isEmpty) return;
 
-                        context.read<FeedCubit>().addComment(
-                          post.id,
-                          currentUserId,
-                          commentText,
-                        );
+                          context.read<FeedCubit>().addComment(
+                            post.id,
+                            currentUserId,
+                            commentText,
+                            post.userId,
+                          );
 
-                        commentController.clear();
-                      },
-                    ),
-                  ],
+                          commentController.clear();
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -111,34 +123,32 @@ class FeedPostTile extends StatelessWidget {
                   const Center(child: Icon(Icons.broken_image, size: 50)),
             ),
           ),
+          if (post.caption.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(post.caption),
+            ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(post.caption),
-          ),
-          Row(
-            children: [
-              IconButton(
-                icon: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 300),
-                  transitionBuilder: (child, anim) =>
-                      ScaleTransition(scale: anim, child: child),
-                  child: Icon(
-                    isLiked ? Icons.favorite : Icons.favorite_border,
-                    key: ValueKey(isLiked),
-                    color: isLiked ? Colors.red : Colors.black,
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                LikeButton(
+                  isLiked: isLiked,
+                  likeCount: post.likes.length,
+                  onTap: () {
+                    context.read<FeedCubit>().likePost(
+                      post.id,
+                      currentUserId,
+                      post.userId,
+                    );
+                  },
                 ),
-                onPressed: () {
-                  context.read<FeedCubit>().likePost(post.id, currentUserId);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.comment),
-                onPressed: () => _showComments(context),
-              ),
-              const Spacer(),
-              Text('${post.likes.length} likes'),
-            ],
+                IconButton(
+                  icon: const Icon(Icons.comment),
+                  onPressed: () => _showComments(context),
+                ),
+              ],
+            ),
           ),
         ],
       ),
