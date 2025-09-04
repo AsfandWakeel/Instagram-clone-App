@@ -32,7 +32,7 @@ class _FeedScreenState extends State<FeedScreen> {
           if (state is FeedLoading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is FeedError) {
-            return Center(child: Text("Error: ${state.message}"));
+            return Center(child: Text("❌ Error: ${state.message}"));
           } else if (state is FeedLoaded) {
             final posts = state.posts;
 
@@ -52,18 +52,6 @@ class _FeedScreenState extends State<FeedScreen> {
                 return PostCard(
                   post: post,
                   currentUserId: widget.currentUserId,
-                  onLike: () => context.read<FeedCubit>().likePost(
-                    post.id,
-                    widget.currentUserId,
-                    post.userId,
-                  ),
-                  onComment: (commentText) =>
-                      context.read<FeedCubit>().addComment(
-                        post.id,
-                        widget.currentUserId,
-                        commentText,
-                        post.userId,
-                      ),
                 );
               },
             );

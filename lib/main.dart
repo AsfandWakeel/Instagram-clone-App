@@ -3,13 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:instagram/features/Post/Data/post_repository.dart';
-import 'package:instagram/services/firebase_auth_service.dart';
 import 'package:instagram/services/notification_services.dart';
-import 'package:instagram/services/firebase_storage.dart';
 import 'package:instagram/services/fcm_service.dart';
-import 'package:instagram/core/routes/app_routes.dart';
-import 'package:instagram/core/theme/app_theme.dart';
+import 'package:instagram/services/firebase_auth_service.dart';
+import 'package:instagram/services/firebase_storage.dart';
+import 'package:instagram/features/Post/Data/post_repository.dart';
 import 'package:instagram/features/Authentication/logics/auth_cubit.dart';
 import 'package:instagram/features/Authentication/data/repository/auth_repository.dart';
 import 'package:instagram/features/Feed/data/feed_repository.dart';
@@ -19,12 +17,14 @@ import 'package:instagram/features/notifications/data/notification_repository.da
 import 'package:instagram/features/notifications/logics/notification_cubit.dart';
 import 'package:instagram/features/Profile/logics/profile_cubit.dart';
 import 'package:instagram/features/Profile/Data/profile_repository.dart';
+import 'package:instagram/core/routes/app_routes.dart';
+import 'package:instagram/core/theme/app_theme.dart';
 import 'package:instagram/features/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await FCMService.init();
+  await FcmService.init();
   runApp(const MyApp());
 }
 
@@ -78,9 +78,8 @@ class MyApp extends StatelessWidget {
           BlocProvider<FeedCubit>(
             create: (context) => FeedCubit(
               context.read<FeedRepository>(),
-              NotificationCubit(
-                notificationRepository: context.read<NotificationRepository>(),
-              ),
+              context.read<NotificationCubit>(),
+              context.read<NotificationRepository>(),
             ),
           ),
           BlocProvider<ProfileCubit>(

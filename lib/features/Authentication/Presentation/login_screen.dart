@@ -7,6 +7,7 @@ import 'package:instagram/features/Authentication/Presentation/forget_password_s
 import 'package:instagram/features/Authentication/Presentation/signup_screen.dart';
 import 'package:instagram/features/Home/home_screen.dart';
 import 'package:instagram/core/utils/auth_validators.dart';
+import 'package:instagram/services/fcm_service.dart';
 
 class LoginScreen extends StatefulWidget {
   static const routeName = '/login';
@@ -37,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _emailController.text.trim(),
       _passwordController.text.trim(),
     );
+    FcmService.saveDeviceToken();
   }
 
   void _loginWithGoogle() {

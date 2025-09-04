@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:instagram/Services/user_services.dart';
 import 'package:instagram/features/Post/Data/post_model.dart';
 import 'package:instagram/features/Post/Presentation/widgets/comment_list.dart';
 import 'package:instagram/features/Post/Presentation/widgets/like_button.dart';
 import 'package:instagram/features/Feed/logics/feed_cubit.dart';
+import 'package:instagram/features/notifications/logics/notification_cubit.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
   final String currentUserId;
 
-  const PostCard({
-    super.key,
-    required this.post,
-    required this.currentUserId,
-    required Future<void> Function() onLike,
-    required Future<void> Function(dynamic commentText) onComment,
-  });
+  const PostCard({super.key, required this.post, required this.currentUserId});
 
   void _showComments(BuildContext context) {
     final TextEditingController commentController = TextEditingController();
@@ -62,6 +58,8 @@ class PostCard extends StatelessWidget {
                           context.read<FeedCubit>().addComment(
                             post.id,
                             currentUserId,
+                            post.profileName, // 👈 ab PostModel se le rahe hain
+                            post.userPhotoUrl, // 👈 ab PostModel se le rahe hain
                             text,
                             post.userId,
                           );
@@ -123,12 +121,21 @@ class PostCard extends StatelessWidget {
                 LikeButton(
                   isLiked: isLiked,
                   likeCount: post.likes.length,
-                  onTap: () {
+                  onTap: () async {
                     context.read<FeedCubit>().likePost(
                       post.id,
                       currentUserId,
                       post.userId,
-                      // removed currentUsername
+                      post.profileName,
+                      post.userPhotoUrl,
+                    );
+                    final user = await UserService().getUserById(currentUserId);
+                    if (!context.mounted) return;
+                    context.read<NotificationCubit>().sendNotification(
+                      senderId: currentUserId,
+                      senderName: user?['username'] ?? '',
+                      receiverId: post.userId,
+                      type: 'like',
                     );
                   },
                 ),

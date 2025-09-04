@@ -7,6 +7,9 @@ class NotificationModel {
   final String type;
   final String? postId;
   final String message;
+  final String senderName;
+  final String senderPhotoUrl;
+  final String? comment;
   final DateTime createdAt;
 
   NotificationModel({
@@ -16,6 +19,9 @@ class NotificationModel {
     required this.type,
     this.postId,
     required this.message,
+    required this.senderName,
+    required this.senderPhotoUrl,
+    this.comment,
     required this.createdAt,
   });
 
@@ -27,20 +33,33 @@ class NotificationModel {
       'type': type,
       'postId': postId,
       'message': message,
-      'createdAt': createdAt.millisecondsSinceEpoch,
+      'senderName': senderName,
+      'senderPhotoUrl': senderPhotoUrl,
+      'comment': comment,
+      'createdAt': Timestamp.fromDate(createdAt),
     };
+  }
+
+  factory NotificationModel.fromMap(Map<String, dynamic> map) {
+    return NotificationModel(
+      id: map['id']?.toString() ?? '',
+      senderId: map['senderId']?.toString() ?? '',
+      receiverId: map['receiverId']?.toString() ?? '',
+      type: map['type']?.toString() ?? '',
+      postId: map['postId']?.toString(),
+      message: map['message']?.toString() ?? '',
+      senderName: map['senderName']?.toString() ?? '',
+      senderPhotoUrl: map['senderPhotoUrl']?.toString() ?? '',
+      comment: map['comment']?.toString(),
+      createdAt: (map['createdAt'] is Timestamp)
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+                DateTime.now(),
+    );
   }
 
   factory NotificationModel.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return NotificationModel(
-      id: doc.id,
-      senderId: data['senderId'] ?? '',
-      receiverId: data['receiverId'] ?? '',
-      type: data['type'] ?? '',
-      postId: data['postId'],
-      message: data['message'] ?? '',
-      createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt']),
-    );
+    return NotificationModel.fromMap(data);
   }
 }

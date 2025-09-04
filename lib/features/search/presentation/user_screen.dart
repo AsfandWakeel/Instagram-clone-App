@@ -34,7 +34,12 @@ class _SearchScreenState extends State<SearchScreen> {
       });
 
       final users = await _userService.searchUsers(value);
-      if (users == null) return;
+
+      if (users == null) {
+        setState(() => _loading = false);
+        return;
+      }
+
       setState(() {
         _results = users;
         _loading = false;
@@ -79,10 +84,14 @@ class _SearchScreenState extends State<SearchScreen> {
                   itemBuilder: (context, index) {
                     final user = _results[index];
 
-                    final profileImage =
+                    final String username = (user['username'] ?? 'No name')
+                        .toString();
+                    final String email = (user['email'] ?? '').toString();
+                    final String uid = (user['uid'] ?? '').toString();
+                    final String? profileImage =
                         (user['profileImage'] != null &&
-                            user['profileImage'].isNotEmpty)
-                        ? user['profileImage']
+                            user['profileImage'].toString().isNotEmpty)
+                        ? user['profileImage'].toString()
                         : null;
 
                     return ListTile(
@@ -94,18 +103,20 @@ class _SearchScreenState extends State<SearchScreen> {
                             ? const Icon(Icons.person)
                             : null,
                       ),
-                      title: Text(user['username'] ?? "No name"),
-                      subtitle: Text(user['email'] ?? ""),
+                      title: Text(username),
+                      subtitle: Text(email),
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ProfileScreen(
-                              uid: user['uid'],
-                              currentUserId: widget.currentUserId,
+                        if (uid.isNotEmpty) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProfileScreen(
+                                uid: uid,
+                                currentUserId: widget.currentUserId,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       },
                     );
                   },

@@ -5,6 +5,7 @@ import 'package:instagram/features/Post/logics/post_cubit.dart';
 import 'package:instagram/features/Post/logics/post_state.dart';
 import 'package:instagram/features/Profile/Data/profile_model.dart';
 import 'package:instagram/features/Profile/Data/profile_repository.dart';
+import 'package:instagram/features/Profile/Presentation/profile_post_preview_screen.dart';
 import 'package:instagram/features/Profile/logics/profile_cubit.dart';
 import 'package:instagram/features/Profile/logics/profile_state.dart';
 import 'edit_profile_screen.dart';
@@ -192,6 +193,17 @@ class ProfileScreen extends StatelessWidget {
               final isSelf = userId == currentUserId;
 
               return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfilePostPreviewScreen(
+                        posts: posts,
+                        initialIndex: index,
+                      ),
+                    ),
+                  );
+                },
                 onLongPress: isSelf
                     ? () {
                         showDialog(

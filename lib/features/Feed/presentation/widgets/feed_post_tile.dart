@@ -77,8 +77,10 @@ class FeedPostTile extends StatelessWidget {
                           context.read<FeedCubit>().addComment(
                             post.id,
                             currentUserId,
+                            post.profileName, // username
+                            post.userPhotoUrl, // user photo
                             commentText,
-                            post.userId,
+                            post.userId, // post owner
                           );
 
                           commentController.clear();
@@ -140,6 +142,8 @@ class FeedPostTile extends StatelessWidget {
                       post.id,
                       currentUserId,
                       post.userId,
+                      post.profileName,
+                      post.userPhotoUrl,
                     );
                   },
                 ),

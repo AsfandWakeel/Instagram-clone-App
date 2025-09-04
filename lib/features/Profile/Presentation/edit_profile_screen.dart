@@ -103,6 +103,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   TextFormField(
                     controller: _usernameController,
                     decoration: const InputDecoration(labelText: "Username"),
@@ -110,16 +111,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       if (value == null || value.isEmpty) {
                         return "Please enter a username";
                       }
+                      if (value.length < 3) {
+                        return "Username must be at least 3 characters long";
+                      }
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
+
+                  // Bio
                   TextFormField(
                     controller: _bioController,
                     decoration: const InputDecoration(labelText: "Bio"),
                     maxLines: 3,
+                    validator: (value) {
+                      if (value != null && value.length > 150) {
+                        return "Bio cannot exceed 150 characters";
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 30),
+
                   ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
