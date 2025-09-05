@@ -122,7 +122,6 @@ class FeedCubit extends Cubit<FeedState> {
         await notificationRepository.sendNotification(notification);
       }
 
-      // ✅ Update UI
       if (state is FeedLoaded) {
         final currentState = state as FeedLoaded;
         final updatedPosts = currentState.posts.map((p) {

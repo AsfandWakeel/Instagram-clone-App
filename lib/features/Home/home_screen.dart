@@ -25,14 +25,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onItemTapped(int index) {
     if (index == 2) {
-      // ✅ Create post screen ko push karo
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => CreatePostScreen(currentUserId: widget.currentUserId),
         ),
       );
-      return; // yaha index change nahi karna
+      return;
     }
 
     setState(() {
@@ -165,7 +164,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _searchScreen(), // 1
             Container(),
             ProfileScreen(
-              // 3
               uid: widget.currentUserId,
               currentUserId: widget.currentUserId,
             ),

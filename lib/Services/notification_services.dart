@@ -7,19 +7,15 @@ import 'package:flutter/foundation.dart';
 class NotificationService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  // ✅ Your deployed Cloud Function endpoint
   final String cloudFunctionUrl =
       "https://sendpushhttp-rna7h2m4ta-uc.a.run.app";
 
-  /// Save to Firestore + Send Push Notification
   Future<void> sendNotification(NotificationModel notification) async {
-    // 1️⃣ Save notification to Firestore
     await firestore
         .collection('notifications')
         .doc(notification.id)
         .set(notification.toMap());
 
-    // 2️⃣ Get receiver’s FCM token
     final receiverDoc = await firestore
         .collection('users')
         .doc(notification.receiverId)
@@ -30,7 +26,6 @@ class NotificationService {
     final token = receiverDoc.data()?['fcmToken'];
     if (token == null || token.isEmpty) return;
 
-    // 3️⃣ Call Cloud Function to send push
     await _sendPushMessage(
       token,
       "New ${notification.type}",
@@ -40,7 +35,6 @@ class NotificationService {
     );
   }
 
-  /// Fetch notifications from Firestore
   Stream<List<NotificationModel>> fetchNotifications(String userId) {
     return firestore
         .collection('notifications')
@@ -54,7 +48,6 @@ class NotificationService {
         );
   }
 
-  /// 🔥 Calls your Cloud Function instead of Legacy API
   Future<void> _sendPushMessage(
     String token,
     String title,
@@ -76,12 +69,12 @@ class NotificationService {
       );
 
       if (response.statusCode == 200) {
-        debugPrint("✅ Push sent successfully!");
+        debugPrint(" Push sent successfully!");
       } else {
-        debugPrint("❌ Push failed: ${response.body}");
+        debugPrint("Push failed: ${response.body}");
       }
     } catch (e) {
-      debugPrint("⚠️ Push error: $e");
+      debugPrint(" Push error: $e");
     }
   }
 }

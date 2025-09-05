@@ -90,7 +90,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       );
                     } else {
-                      // Like / Comment notifications → no preview anymore
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text(

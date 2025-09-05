@@ -119,7 +119,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Bio
                   TextFormField(
                     controller: _bioController,
                     decoration: const InputDecoration(labelText: "Bio"),

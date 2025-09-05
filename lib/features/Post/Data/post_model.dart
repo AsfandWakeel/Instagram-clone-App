@@ -3,8 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PostModel {
   final String id;
   final String userId;
-  final String profileName; // 👈 username
-  final String userPhotoUrl; // 👈 profile picture
+  final String profileName;
+  final String userPhotoUrl;
   final String imageUrl;
   final String caption;
   final DateTime createdAt;

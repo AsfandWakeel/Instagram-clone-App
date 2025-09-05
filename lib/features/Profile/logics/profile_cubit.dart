@@ -47,7 +47,6 @@ class ProfileCubit extends Cubit<ProfileState> {
     }
   }
 
-  /// Directly upload a profile photo using the repository
   Future<String> uploadProfilePhoto(File file, String uid) async {
     try {
       final downloadUrl = await repository.updateProfilePhoto(
